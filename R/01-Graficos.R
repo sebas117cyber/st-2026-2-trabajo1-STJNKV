@@ -1,240 +1,260 @@
-# Grafico de serie Y correlograma
-
-library(tidyverse)
+library(tibble)
 library(dplyr)
-library(tidyr)
 library(ggplot2)
+library(stats)
 library(patchwork)
+#------------------Grafica de la serie-----------------------------#
 
-
-# Grafi de la serie
-
-Graficar_serie <- function(serie, titulo) {
+graficar_serie <- function(datos, titulo) {
   
-  fuente <- attr(serie, "fuente")
-  unidad <- attr(serie, "unidad")
+  #Graficos la series, en esta funcion recibe dos parametros datos y titulo, donde 
+  #datos viene con dos tributos fuente y observacion que se brindan en la funcion de leer_seri
   
   
-  colnames(serie) <- c("t", "fecha", "valores")
-  # nivel general
-  nivel_general <- mean(serie$valores, na.rm = TRUE)
+  # Sacamos la informacion de fuente y unidad
+  fuente <- attr(datos, "fuente")
+  unidad <- attr(datos, "unidad")
   
-  t_obs <- length(serie$valores)
+  # Observaciones
+  n <- nrow(datos)
   
-  # Construir el gráfico
-  p <- ggplot(serie, aes(x = fecha, y = valores)) +
+  # Creamos el grafico 
+  ggplot(datos, aes(x = fecha, y = y)) +
+    geom_line() +
     
-    geom_line(colour = "#00B2EE", linewidth = 0.8) +
-    
-    # muestra del nivel
-    geom_hline(
-      aes(yintercept = nivel_general, linetype = "Nivel general"),
-      colour    = "#8B2323",
-      linewidth = 0.8
-    ) +
-    
-    # Leyenda manual para la línea de referencia
-    scale_linetype_manual(
-      name   = "Referencia",
-      values = c("Nivel general" = "dashed")
-    ) +
-    
-    # Etiquetas del gráfico
     labs(
-      title    = titulo,
-      subtitle = NULL,
-      x        = "Fecha",
-      y        = paste("(", unidad, ")", sep = ""), 
+      title = titulo,
+      x = "Fecha",
+      y = paste(unidad, sep = ""),
       caption = paste(
-        "Fuente:", fuente, 
-        "observaciones:", t_obs
+        "Fuente:", fuente,
+        "| Observaciones:", n
       )
     ) +
     
-    # Tema limpio
-    theme_minimal(base_size = 13)
-  
-  # Mostrar el gráfico
-  print(p)
-}
-
-
-## Correlograma con pacf
-
-correlograma <- function(datos, m = NULL) {
-  
-  valores <- datos$valores
-  
-  n <- length(valores) # T observaciones
-  
-  # Rezagos por defectos
-  if (is.null(m)) {
-    m <- min(floor(n / 4), 24)
-  }
-  
-  # calculo manual del ACF
-  media <- mean(valores)
-  
-  rezagos <- 1:m
-  
-  acf_mano <- function(valores, rezagos) {
+    theme_minimal() +
     
-    denominador <- sum((valores[1:n]-media)^2)
-    
-    map_dbl(rezagos, function(h) {
-      numerador <- sum((valores[(h+1):n]-media) * (valores[1:(n-h)]-media))
-      numerador/denominador
-    }) 
-  }
-  
-  tabla_acf <- tibble(
-    h = rezagos,
-    acf = acf_mano(valores, rezagos)
-  ) 
-  
-  # calculo de pacf
-  pacf_obj  <- pacf(valores, lag.max = m, plot = FALSE)
-  pacf_vals <- as.numeric(pacf_obj$acf)
-  datos_pacf <- tibble(h = rezagos, pacf = pacf_vals)
-  
-  # bandas de confianza
-  ci     <- 0.95
-  banda_rw <- qnorm((1 + ci) / 2) / sqrt(n)          # ruido blanco
-  
-  # Banda secuencial (rezago h): ± 1.96/sqrt(n) * sqrt(1 + 2*sum(r_k^2, k<h))
-  banda_seq <- sapply(rezagos, function(h) {
-    if (h == 1) {
-      banda_rw
-    } else {
-      banda_rw * sqrt(1 + 2 * sum(tabla_acf$acf[1:(h - 1)]^2))
-    }
-  })
-  
-  # Tabla de bandas en formato largo para geom_line
-  datos_bandas <- tibble(
-    h            = rezagos,
-    `Ruido blanco` = banda_rw,          # constante
-    `Secuencial`   = banda_seq
-  ) |>
-    pivot_longer(
-      cols      = c("Ruido blanco", "Secuencial"),
-      names_to  = "tipo_banda",
-      values_to = "valor_banda"
+    theme(
+      plot.title = element_text(
+        size = 16,
+        face = "bold",
+        hjust = 0.5
+      ),
+      axis.title = element_text(
+        face = "bold"
+      ),
+      axis.text.x = element_text(
+        angle = 45,
+        hjust = 1
+      ),
+      plot.caption = element_text(
+        hjust = 0
+      )
     )
-  
-  #  Gráfico ACF 
-  p_acf <- ggplot() +
-    
-    geom_hline(yintercept = 0, colour = "grey30", linewidth = 0.6) +
-    
-    # Barras de la ACF
-    geom_segment(
-      data = tabla_acf,
-      aes(x = h, xend = h, y = 0, yend = acf),
-      colour    = "#1F3B57",
-      linewidth = 1.4
-    ) +
-    
-    # Banda superior
-    geom_line(
-      data = datos_bandas,
-      aes(x = h, y = valor_banda,
-          colour   = tipo_banda,
-          linetype = tipo_banda),
-      linewidth = 0.7
-    ) +
-    
-    # Banda inferior
-    geom_line(
-      data = datos_bandas,
-      aes(x = h, y = -valor_banda,
-          colour   = tipo_banda,
-          linetype = tipo_banda),
-      linewidth = 0.7
-    ) +
-    
-    scale_colour_manual(
-      name   = "Bandas de confianza",
-      values = c("Ruido blanco" = "#A50026", "Secuencial" = "#1B6B30")
-    ) +
-    scale_linetype_manual(
-      name   = "Bandas de confianza",
-      values = c("Ruido blanco" = "dashed", "Secuencial" = "solid")
-    ) +
-    scale_x_continuous(breaks = rezagos) +
-    
-    labs(
-      title = "ACF muestral",
-      x     = "Rezago  h",
-      y     = expression(hat(rho)(h))
-    ) +
-    theme_minimal(base_size = 13) +
-    theme(legend.position = "top")
-  
-  # Gráfico PACF 
-  p_pacf <- ggplot() +
-    
-    geom_hline(yintercept = 0, colour = "grey30", linewidth = 0.6) +
-    
-    # Barras de la PACF
-    geom_segment(
-      data = datos_pacf,
-      aes(x = h, xend = h, y = 0, yend = pacf),
-      colour    = "#4D4D4D",
-      linewidth = 1.4
-    ) +
-    
-    # (solo ruido blanco para PACF)
-    geom_hline(
-      yintercept =  banda_rw,
-      colour     = "#A50026",
-      linetype   = "dashed",
-      linewidth  = 0.7
-    ) +
-    
-    # Banda inferior
-    geom_hline(
-      yintercept = -banda_rw,
-      colour     = "#A50026",
-      linetype   = "dashed",
-      linewidth  = 0.7
-    ) +
-    
-    scale_x_continuous(breaks = rezagos) +
-    
-    labs(
-      title = "PACF muestral",
-      x     = "Rezago  h",
-      y     = expression(hat(phi)(h))
-    ) +
-    theme_minimal(base_size = 13)
-  
-  #  Panel combinado ACF arriba + PACF abajo
-  panel <- p_acf / p_pacf
-  print(panel)
-  
-  
-  acf_stats <- acf(valores, lag.max = m, plot = FALSE)$acf[-1]   # quita rezago 0
-  acf_stats  <- as.numeric(acf_stats)
-  
-  max_dif <- max(abs(tabla_acf$acf - acf_stats))
-  
-  
-  print("Maxima diferencia absoluta:")
-  print(max_dif)
-
-  
-  # Devolver invisiblemente los valores calculados
-  invisible(list(
-    acf    = tabla_acf$acf,
-    pacf   = datos_pacf,
-    bandas = datos_bandas,
-    n      = n,
-    m      = m
-  ))
-  
-  
 }
 
+#--------------------Grafico correlograma-----------------------------#
 
-
+correlograma <- function(datos,m = NULL){
+  
+  # Extraemos la serie numérica
+  datos <- datos$y
+  
+  
+  T <- length(datos) #Numero de observaciones
+  
+  #Valida si m es null o diferente 
+  if(is.null(m)){
+    m <- min(floor(T/4),24)
+  }
+  
+  #-----------Funcion ACF Manual------------------#
+  ACF <- function(datos, h) {
+    
+    T <- length(datos)
+    promedio <- sum(datos) / T
+    denominador <- sum((datos - promedio)^2)
+    
+    producto <- c()
+    for (i in 1:T) {
+      resultado <- datos[i] - promedio
+      producto <- c(producto, resultado)
+    }
+    
+    valor <- c()
+    for (i in 1:(T - h)) {
+      resultado <- producto[i + h] * producto[i]
+      valor <- c(valor, resultado)
+    }
+    
+    acf <- sum(valor) / denominador
+    
+    return(acf)
+  }
+  
+  # Calculamos la ACF manual desde 1 hasta m
+  acf_manual <- c()
+  
+  for (h in 1:m) {
+    resultado <- ACF(datos, h)
+    acf_manual <- c(acf_manual, resultado)
+  }
+  
+  # ACF calculada por R
+  acf_r <- acf(datos, lag.max = m, plot = FALSE)$acf[-1]
+  
+  # Diferencias absolutas entre la ACF manual y la de R
+  diferencias <- abs(acf_manual - acf_r)
+  
+  # Maxima diferencia
+  diferencia_maxima <- max(diferencias)
+  
+  #-----------Calculamos la PACF con la funcion de R---------------#
+  pacf_r <- pacf(datos, lag.max = m, plot = FALSE)$acf
+  
+  # Creamos los datos para graficar la ACF
+  datos_acf <- data.frame(
+    rezago = 1:m,
+    valor = acf_manual
+  )
+  
+  # Creamos los datos para graficar la PACF
+  datos_pacf <- data.frame(
+    rezago = 1:m,
+    valor = as.numeric(pacf_r)
+  )
+  
+  # Calculamos la banda de confianza del 95 %
+  banda <- qnorm((1 + 0.95) / 2) / sqrt(T)
+  
+  # Funcion para crear los graficos ACF y PACF
+  graficar_correlacion <- function(datos, titulo, etiqueta_y) {
+    
+    ggplot(datos, aes(x = rezago, y = valor)) +
+      
+      # Barras verticales
+      geom_segment(
+        aes(xend = rezago, yend = 0)
+      ) +
+      
+      # Linea central
+      geom_hline(yintercept = 0) +
+      
+      # Banda superior
+      geom_hline(
+        yintercept = banda,
+        linetype = "dashed"
+      ) +
+      
+      # Banda inferior
+      geom_hline(
+        yintercept = -banda,
+        linetype = "dashed"
+      ) +
+      
+      labs(
+        title = titulo,
+        x = "Rezago",
+        y = etiqueta_y
+      ) +
+      
+      theme_minimal()
+  }
+  
+  # Grafico de la ACF
+  grafico_acf <- graficar_correlacion(
+    datos_acf,
+    "Función de Autocorrelación (ACF)",
+    "ACF"
+  )
+  
+  # Grafico de la PACF
+  grafico_pacf <- graficar_correlacion(
+    datos_pacf,
+    "Función de Autocorrelación Parcial (PACF)",
+    "PACF"
+  )
+  
+  # Unimos los graficos
+  panel <- grafico_acf / grafico_pacf
+  
+  return(list(acf =acf_manual, panel = panel,diferencia_maxima= diferencia_maxima))
+  
+}
+#----------------- Grafico de rezagos -----------------------------#
+grafico_rezagos <- function(y, k, unidad = "unidad", nombre = "serie") {
+  
+  # Ver varios graficos 
+  par(mfrow = c(1, length(k)),
+      mar = c(4, 2, 2, 1),
+      oma = c(4, 4, 4, 1))
+  
+  # Repetir el procedimiento para cada rezago
+  for (i in k) {
+    
+    # Número de observaciones
+    n <- length(y)
+    
+    # Construir los vectores pareados
+    y_t <- y[(i + 1):n]
+    y_lag <- y[1:(n - i)]
+    
+    # Calcular las medias
+    media_y <- mean(y_t)
+    media_lag <- mean(y_lag)
+    
+    # Calcular la pendiente
+    b <- sum((y_lag - media_lag) * (y_t - media_y)) /
+      sum((y_lag - media_lag)^2)
+    
+    # Calcular el intercepto
+    a <- media_y - b * media_lag
+    
+    # Graficar
+    plot(
+      y_lag, y_t,
+      main = paste("k =", i),
+      xlab = "",
+      ylab = "",
+      pch = 16
+    )
+    
+    # Construir los valores de la recta
+    x_recta <- c(min(y_lag), max(y_lag))
+    y_recta <- a + b * x_recta
+    
+    # Graficar la recta 
+    lines(x_recta, y_recta, lwd = 2)
+  }
+  
+  # Titulo
+  mtext(
+    nombre,
+    side = 3,
+    outer = TRUE,
+    line = 1,
+    cex = 1.2,
+    font = 2
+  )
+  
+  # Eje X 
+  mtext(
+    paste("y[t-k] (", unidad, ")", sep = ""),
+    side = 1,
+    outer = TRUE,
+    line = 2,
+    cex = 1
+  )
+  
+  # Eje Y 
+  mtext(
+    paste("y[t] (", unidad, ")", sep = ""),
+    side = 2,
+    outer = TRUE,
+    line = 2,
+    cex = 1
+  )
+  
+  # Volver a la configuración normal
+  par(mfrow = c(1, 1))
+}
