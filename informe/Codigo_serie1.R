@@ -1,5 +1,7 @@
 # serie 1
 
-library(readr)
-STJNKV_serie_1 <- read_csv("datos/STJNKV-serie-1.csv")
-View(STJNKV_serie_1)
+serie_1 <- leer_serie("datos/STJNKV-serie-1.csv", "CORPALMAS acueducto", "miles m³")
+
+serie_2 <- leer_serie("datos/STJNKV-serie-2.csv", "CORPALMAS acueducto", "µg/m³")
+
+serie_3 <- leer_serie("datos/STJNKV-serie-3.csv", "CORPALMAS acueducto", "m³/s")
