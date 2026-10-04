@@ -1,0 +1,14 @@
+---
+title: "Trabajo 1"
+subtitle: "Series de Tiempo — Pregrado en Estadística, UNAL Medellín"
+author: "Sebastian Valencia Botero ; Daniel Garavito ; Julian Ariza "
+date: today
+format:
+  pdf:
+    number-sections: true
+    toc: true
+    fig-width: 6
+    fig-height: 4
+editor: visual
+---
+
