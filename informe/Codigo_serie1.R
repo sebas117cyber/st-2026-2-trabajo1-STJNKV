@@ -46,3 +46,54 @@ tabla_ficha1 <- kable(ficha_st1, booktabs = TRUE, align = c("l", "l"),
 save_kable(tabla_ficha1, file = "figs/ficha_serie1.png")
 
 remove(tabla_ficha1, ficha_st1)
+
+
+# grafico
+
+serie1_graf <- Graficar_serie(serie_1, "consumo mensual de agua potable 2011-2025")
+
+corre_serie1 <- correlograma(serie_1)
+
+reza_serie1 <- corre_serie1$acf
+
+
+
+# rezagos
+
+
+# parece cuadratica, aplicar log?
+# serie con los valores en log
+serie_1trans <- serie_1 |> 
+  mutate(y = log(y))
+
+
+Graficar_serie(serie_1trans, "consumo mensual de agua ")
+
+# operaciones de rezago
+
+elegir_d <- function(y, d_max = 2) {
+  vars <- purrr::map_dbl(0:d_max, ~ var(diferenciar(y, d = .x, D = 0, s = 1)))
+  tibble::tibble(d = 0:d_max, varianza = vars) |>
+    dplyr::mutate(optimo = varianza == min(varianza))
+}
+
+elegir_D <- function(y, s, D_max = 1) {
+  vars <- purrr::map_dbl(0:D_max, ~ var(diferenciar(y, d = 0, D = .x, s = s)))
+  tibble::tibble(D = 0:D_max, varianza = vars) |>
+    dplyr::mutate(optimo = varianza == min(varianza))
+}
+
+
+elegir_d(serie_1trans$y)
+
+elegir_D(serie_1trans$y, s= 12, D_max = 5)
+
+# (1-B) (1-B^12)
+op_rezago_serie1 <- diferenciar(serie_1trans$y, 1, 1, 12)
+
+serie_1trans <- serie_1trans |> 
+  append(op_rezago_serie1)
+
+
+
+
