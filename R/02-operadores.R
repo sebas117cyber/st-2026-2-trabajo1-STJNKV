@@ -1,5 +1,6 @@
 # operadores 
 
+# (1-B)^d (1-B^s)^D
 diferenciar <- function(y, d, D, s){
   
   vals <- y
@@ -42,7 +43,7 @@ polinomio_rezago <- function(coef) {
 # s <- 4
 # set.seed(2024)
 # y <- rnorm(100, 2, 3)
-# 
+# # caso 1
 # mia_est   <- diferenciar(y, d = 0, D = D, s = s)
 # base_est  <- diff(y, lag = s, differences = D)
 # 
