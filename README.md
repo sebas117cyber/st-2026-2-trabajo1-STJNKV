@@ -7,7 +7,7 @@
 | Archivo | Contenido | Dependencias |
 |:-----------------------|:-----------------------|:-----------------------|
 | `R/00-lectura.R` | `leer_serie()`: lee un objeto `ts` o un csv y devuelve un tibble con `t`, `fecha`, `y` y los atributos `frecuencia`, `fuente` y `unidad` | tibble |
-| `R/01-graficos.R` | `graficar_serie()`, `acf_muestral()`, `banda_ruido_blanco()`, `correlograma()` y `graficar_optimizacion()` | ggplot2, patchwork |
+| `R/01-graficos.R` | `graficar_serie()`, `correlograma()` y `graficar_optimizacion()` | ggplot2 |
 | `R/02-operadores.R` | `diferenciar`, `polinomio_rezago` | tibble |
 | `R/03-dependencias.R` |   |   |
 | `R/04-metodos` | Los ocho métodos (`ajustar_media()`, `ajustar_mm()`, `ajustar_ses()`, `ajustar_dmm()`, `ajustar_tendencia()`, `ajustar_holt()`) y `optimizar()` | R base |
