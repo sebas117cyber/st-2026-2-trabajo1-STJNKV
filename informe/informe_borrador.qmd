@@ -88,6 +88,11 @@ Caudal medio mensual, en m³/s, del río Sinuoso en la bocatoma del acueducto, m
 
 ![Tabla de reglas - Serie 1](../figs/tablaR_serie1.png){width="100%"}
 
+
+![Tabla de reglas - Serie 2](../figs/tablaR_serie2.png){width="100%"}
+
+![Tabla de reglas - Serie 3](../figs/tablaR_serie3.png){width="100%"}
+
 # Punto 3
 
 
