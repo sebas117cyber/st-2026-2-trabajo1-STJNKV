@@ -37,6 +37,19 @@ polinomio_rezago <- function(coef) {
 }
 
 
+# elegir_d <- function(y, d_max = 2) {
+#   vars <- purrr::map_dbl(0:d_max, ~ var(diferenciar(y, d = .x, D = 0, s = 1)))
+#   tibble::tibble(d = 0:d_max, varianza = vars) |>
+#     dplyr::mutate(optimo = varianza == min(varianza))
+# }
+# 
+# elegir_D <- function(y, s, D_max = 1) {
+#   vars <- purrr::map_dbl(0:D_max, ~ var(diferenciar(y, d = 0, D = .x, s = s)))
+#   tibble::tibble(D = 0:D_max, varianza = vars) |>
+#     dplyr::mutate(optimo = varianza == min(varianza))
+# }
+
+
 # verificaciones
 # 
 # D <- 1
@@ -58,8 +71,8 @@ polinomio_rezago <- function(coef) {
 # cat("Combinación (d =", d, ", D =", D, ", s =", s, ") coincide:",
 #     all.equal(mia_comb, base_comb), "\n")
 # 
-# # polinomio
-# # c(B) = 1 - 0.5B + 0.25B^2
+# polinomio
+# c(B) = 1 - 0.5B + 0.25B^2
 # coef <- c(-0.5, 0.25)
 # print(polinomio_rezago(coef))
-# 
+

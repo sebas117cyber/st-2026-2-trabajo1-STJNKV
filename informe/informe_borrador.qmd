@@ -27,6 +27,21 @@ library(kableExtra)
 
 # Punto 2
 
+```{r, include=FALSE}
+# lectura de series
+
+source("../R/00-lectura.R")
+
+serie_1 <- leer_serie("../datos/STJNKV-serie-1.csv", "CORPALMAS acueducto", "miles m³")
+
+serie_2 <- leer_serie("../datos/STJNKV-serie-2.csv", "estación de monitoreo del centro de Villa Clara", "µg/m³")
+
+serie_3 <- leer_serie("../datos/STJNKV-serie-3.csv", "CORPALMAS acueducto", "m³/s")
+
+
+```
+
+
 
 ## A
 
@@ -48,11 +63,9 @@ library(kableExtra)
 
 **serie 1**
 
-Volumen de agua potable facturado cada mes por la empresa de acueducto de Villa Clara, en miles de m³. La planta de potabilización trata como máximo 650 mil m³ al mes; una ampliación cuesta 42.000 millones de pesos y tarda 18 meses entre la decisión y la puesta en marcha, y si la demanda supera la capacidad hay que racionar el servicio por sectores. Interesa a la junta de la empresa, al concejo municipal, que aprueba el crédito, y a los usuarios. La pregunta de la junta: ¿hay que decidir la ampliación de la planta en los próximos meses?
 
-**pregunta serie 1** ¿El consumo mensual de agua potable en miles de m³ de la ciudad Villa Clara superara la capacidad de su acueducto de potavilizar 650 mil m³ al mes en un horizonte de 18 a 24 meses?
+**pregunta serie 1** ¿El consumo mensual de agua potable en miles de m³ de la ciudad Villa Clara superara la capacidad de su acueducto de potavilizar 650 mil m³ al mes para planificar una ampliacion en un horizonte de 18 a 24 meses?
 
-¿En que medida un modelo mejorara el pronostico de consumo mensual de agua potavilizada medida en miles m³ de la ciudad Villa Clara con un horizonte de 18 a 24 meses medido con MASE frente a un promedio estacional para evitar el desbordamiento de capacidades del acueducto, evitar un razionamiento y tomar decisiones tempranas para su ampliacion ?
 
 **serie 2**
 
@@ -62,10 +75,31 @@ En la estación de monitoreo de Villa Clara se mide diariamente la concentració
 
 **serie 3**
 
-Caudal medio mensual de un río andino \| m³/s \| mensual \| 2012-01-01 a 2025-12-01 \| 168 \|
 
 Caudal medio mensual, en m³/s, del río Sinuoso en la bocatoma del acueducto, medido por la estación limnigráfica de la corporación. La concesión permite captar el volumen completo mientras el caudal se mantenga por encima de 110 m³/s; por debajo de ese valor la corporación ordena reducir la captación a la mitad, y la empresa debe llenar con anticipación los tanques de reserva, lo que cuesta 150 millones de pesos por mes. Interesa a la corporación, a la empresa de acueducto y a los usuarios de la cuenca aguas abajo. La pregunta de la empresa de acueducto: ¿en cuáles de los próximos doce meses conviene preparar los tanques de reserva?
 
 **pregunta serie 3**
 
-¿en que mes del proximo año segun un diagnostico del caudal del rio sinuoso medido en m³/s se reducira por debajo de 110 m³/s para llenar los tanques con anticipacion exacta y reducir costos?
+¿en que mes del proximo año segun un diagnostico del caudal del rio sinuoso medido en m³/s mensualmente se reducira por debajo de 110 m³/s en un horizonte de 12 meses para llenar preparar el presupuesto de llenado de tanques con anticipacion y el tiempo necesario de mantenerlos llenos?
+
+
+## C
+
+
+![Tabla de reglas - Serie 1](../figs/tablaR_serie1.png){width="100%"}
+
+# Punto 3
+
+
+# Punto 4
+
+
+## b
+
+**serie 1**
+
+se propone una diferencia $\nabla^2 log(yt)}$ y una transformacion $log(y_t)$ para los datos y el polinomio quedaria $1-B - B^{12} +B^{13}$
+
+
+
+
