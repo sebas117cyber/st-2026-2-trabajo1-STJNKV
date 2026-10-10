@@ -181,6 +181,7 @@ correlograma <- function(datos,m = NULL){
   return(list(acf =acf_manual, panel = panel,diferencia_maxima= diferencia_maxima))
   
 }
+
 #----------------- Grafico de rezagos -----------------------------#
 grafico_rezagos <- function(y, k, unidad = "unidad", nombre = "serie") {
   
@@ -257,4 +258,54 @@ grafico_rezagos <- function(y, k, unidad = "unidad", nombre = "serie") {
   
   # Volver a la configuración normal
   par(mfrow = c(1, 1))
+}
+#---------------------Grafico Estacional------------------------------#
+
+grafico_estacional <- function(y, s, unidad, titulo, nombre_estacion = "Mes (1 = enero)") {
+  t <- seq_along(y)
+  d <- data.frame(
+    ciclo    = factor(((t - 1) %/% s) + 1),   # año 1, 2, ..., 14
+    estacion = ((t - 1) %% s) + 1,            # mes 1..12
+    y        = y
+  )
+  ggplot2::ggplot(d, ggplot2::aes(x = estacion, y = y,
+                                  group = ciclo, colour = ciclo)) +
+    ggplot2::geom_line(alpha = 0.7) +
+    ggplot2::scale_x_continuous(breaks = 1:s) +
+    ggplot2::labs(title = titulo, x = nombre_estacion, y = unidad, colour = "Año",
+                  caption = paste("Observaciones:", length(y))) +
+    ggplot2::theme_minimal()
+}
+
+
+#---------------------Grafico de descomposicion------------------------#
+grafico_descomposicion <- function(dec, y, unidad, nombre_estacion = "Mes (1 = enero)") {
+  t <- seq_along(y)
+  s <- length(dec$indices)
+  
+  p1 <- ggplot2::ggplot(data.frame(t = t, y = y, tend = dec$tendencia)) +
+    ggplot2::geom_line(ggplot2::aes(t, y), colour = "grey60") +
+    ggplot2::geom_line(ggplot2::aes(t, tend), colour = "red", na.rm = TRUE) +
+    ggplot2::labs(title = "Serie (gris) y tendencia (rojo)",
+                  x = "Tiempo (meses)", y = unidad) +
+    ggplot2::theme_minimal()
+  
+  p2 <- ggplot2::ggplot(data.frame(e = 1:s, i = dec$indices),
+                        ggplot2::aes(e, i)) +
+    ggplot2::geom_col() +
+    ggplot2::geom_hline(yintercept = 0) +
+    ggplot2::scale_x_continuous(breaks = 1:s) +
+    ggplot2::labs(title = paste("Índices estacionales (", dec$tipo, ")", sep = ""),
+                  x = nombre_estacion, y = unidad) +
+    ggplot2::theme_minimal()
+  
+  p3 <- ggplot2::ggplot(data.frame(t = t, r = dec$residuo),
+                        ggplot2::aes(t, r)) +
+    ggplot2::geom_line(na.rm = TRUE) +
+    ggplot2::geom_hline(yintercept = 0, linetype = "dashed") +
+    ggplot2::labs(title = "Residuo", x = "Tiempo (meses)", y = unidad,
+                  caption = paste("Observaciones:", length(y))) +
+    ggplot2::theme_minimal()
+  
+  patchwork::wrap_plots(p1, p2, p3, ncol = 1)
 }
