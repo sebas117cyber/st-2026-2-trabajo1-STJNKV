@@ -99,37 +99,3 @@ leer_serie <- function(x, fuente, unidad) {
   return(datos)
 }
 
-
-crear_ficha <- function(serie, nombre = "Serie 1", unidad = attr(serie, "unidad")) {
-  
-  freq <- attr(serie, "frecuencia")
-  if (is.null(freq)) freq <- 1
-  
-  frecuencia_label <- switch(as.character(freq),
-                             "12"  = "Mensual",
-                             "4"   = "Trimestral",
-                             "1"   = "Anual",
-                             "52"  = "Semanal",
-                             "365" = "Diaria",
-                             as.character(freq))
-  
-  fecha_ini <- as.character(min(serie$fecha, na.rm = TRUE))
-  fecha_fin <- as.character(max(serie$fecha, na.rm = TRUE))
-  val       <- serie$y
-  
-  tibble(
-    Característica = c("Nombre", "Unidad", "Frecuencia",
-                       "Fecha inicial", "Fecha final",
-                       "T (observaciones)", "Mínimo",
-                       "Máximo", "Media"),
-    Valor = c(as.character(nombre),
-              as.character(if (is.null(unidad)) "sin unidad" else unidad),
-              frecuencia_label,
-              fecha_ini,
-              fecha_fin,
-              as.character(length(val)),
-              as.character(round(min(val, na.rm = TRUE), 2)),
-              as.character(round(max(val, na.rm = TRUE), 2)),
-              as.character(round(mean(val, na.rm = TRUE), 2)))
-  )
-}

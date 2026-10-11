@@ -62,7 +62,7 @@ tabla_Rs1 <- kable(tabla_serie1, booktabs = TRUE, align = "c",
   kable_styling(latex_options = c("hold_position", "scale_down")) |>
   row_spec(nrow(tabla_serie1), extra_latex_after = "\\bottomrule")
 
-save_kable(tabla_Rs1, file = "figs/tablaR_serie1.png")
+#save_kable(tabla_Rs1, file = "figs/tablaR_serie1.png")
 
 remove(T_1, frecuencia_1, unidad_1, fuente_1, n0_1, H_1, origenes_h1_1, origenes_H_1, 
        fecha_inicio_1, fecha_corte_1, fecha_fin_1, tabla_serie1, tabla_Rs1)

@@ -268,22 +268,7 @@ transformaciones_s3 <- list(
 )
 
 
-tabla_transformaciones <- function(y, transformaciones) {
-  purrr::imap_dfr(transformaciones, function(f, nombre) {
-    
-    y_t <- f(y)   # serie transformada
-    
-    # correlograma() necesita un objeto con $y -> lo envolvemos en lista
-    r1_t <- correlograma(list(y = y_t), m = 1)$acf[1]
-    
-    tibble::tibble(
-      Transformacion = nombre,
-      Media    = mean(y_t),
-      Varianza = var(y_t),
-      r1       = r1_t
-    )
-  })
-}
+
 
 tablaVar_s3 <- tabla_transformaciones(serie_3$y, transformaciones_s3) |>
   dplyr::mutate(dplyr::across(where(is.numeric), ~ round(.x, 4)))

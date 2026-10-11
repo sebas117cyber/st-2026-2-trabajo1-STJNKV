@@ -41,21 +41,138 @@ serie_3 <- leer_serie("../datos/STJNKV-serie-3.csv", "CORPALMAS acueducto", "m³
 
 ```
 
+
+```{r, include=FALSE}
+
+# funciones de tablas
+
+source("../R/01-Graficos.R")
+source("../R/02-operadores.R")
+source("../R/03-dependencia.R")
+
+
+crear_ficha <- function(serie, nombre = "Serie 1", unidad = attr(serie, "unidad")) {
+  
+  freq <- attr(serie, "frecuencia")
+  if (is.null(freq)) freq <- 1
+  
+  frecuencia_label <- switch(as.character(freq),
+                             "12"  = "Mensual",
+                             "4"   = "Trimestral",
+                             "1"   = "Anual",
+                             "52"  = "Semanal",
+                             "365" = "Diaria",
+                             as.character(freq))
+  
+  fecha_ini <- as.character(min(serie$fecha, na.rm = TRUE))
+  fecha_fin <- as.character(max(serie$fecha, na.rm = TRUE))
+  val       <- serie$y
+  
+  tibble(
+    Característica = c("Nombre", "Unidad", "Frecuencia",
+                       "Fecha inicial", "Fecha final",
+                       "T (observaciones)", "Mínimo",
+                       "Máximo", "Media"),
+    Valor = c(as.character(nombre),
+              as.character(if (is.null(unidad)) "sin unidad" else unidad),
+              frecuencia_label,
+              fecha_ini,
+              fecha_fin,
+              as.character(length(val)),
+              as.character(round(min(val, na.rm = TRUE), 2)),
+              as.character(round(max(val, na.rm = TRUE), 2)),
+              as.character(round(mean(val, na.rm = TRUE), 2)))
+  )
+}
+
+
+
+
+
+tabla_transformaciones <- function(y, transformaciones) {
+  purrr::imap_dfr(transformaciones, function(f, nombre) {
+    
+    y_t <- f(y)   # serie transformada
+    
+    # correlograma() necesita un objeto con $y -> lo envolvemos en lista
+    r1_t <- correlograma(list(y = y_t), m = 1)$acf[1]
+    
+    tibble::tibble(
+      Transformacion = nombre,
+      Media    = mean(y_t),
+      Varianza = var(y_t),
+      r1       = r1_t
+    )
+  })
+}
+
+
+
+```
+
+
+
 ## A
 
 ### Item A
 
 #### ficha serie 1
 
-![Ficha técnica - Serie 1](../figs/ficha_serie1.png){width="100%"}
+<!-- ![Ficha técnica - Serie 1](../figs/ficha_serie1.png){width="100%"} -->
+
+```{r, echo=FALSE}
+
+ficha_st1 <- crear_ficha(serie_1, "consumo mensual de agua potable 2011-2025", "m³")
+
+tabla_ficha1 <- kable(ficha_st1, booktabs = TRUE, align = c("l", "l"),
+      caption = "Ficha técnica - Serie 1") |>
+  kable_styling(latex_options = c("hold_position"),
+                full_width = FALSE)
+tabla_ficha1
+
+```
+
+
 
 #### ficha serie 2
 
-![Ficha técnica - Serie 1](../figs/ficha_serie2.png){width="100%"}
+<!-- ![Ficha técnica - Serie 2](../figs/ficha_serie2.png){width="100%"} -->
+
+
+```{r, echo=FALSE}
+
+ficha_st2 <- crear_ficha(serie_2, "concentracion de PM2.5  2025-02-03 a 2025-09-10")
+
+tabla_ficha2 <- kable(ficha_st2, booktabs = TRUE, align = c("l", "l"),
+      caption = "Ficha técnica - Serie 2") |>
+  kable_styling(latex_options = c("hold_position"),
+                full_width = FALSE)
+
+
+tabla_ficha2
+
+```
+
+
 
 #### ficha serie 3
 
-![Ficha técnica - Serie 1](../figs/ficha_serie3.png){width="100%"}
+<!-- ![Ficha técnica - Serie 3](../figs/ficha_serie3.png){width="100%"} -->
+
+```{r, echo=FALSE}
+
+ficha_st3 <- crear_ficha(serie_3, "Caudal medio mensual de un río andino", "m³/s")
+
+tabla_ficha3 <- kable(ficha_st3, booktabs = TRUE, align = c("l", "l"),
+      caption = "Ficha técnica - Serie 3") |>
+  kable_styling(latex_options = c("hold_position"),
+                full_width = FALSE)
+
+tabla_ficha3
+
+```
+
+
 
 ## B
 
@@ -79,11 +196,176 @@ Caudal medio mensual, en m³/s, del río Sinuoso en la bocatoma del acueducto, m
 
 ## C
 
-![Tabla de reglas - Serie 1](../figs/tablaR_serie1.png){width="100%"}
+```{r, include=FALSE}
+#tablas para cada serie
 
-![Tabla de reglas - Serie 2](../figs/tablaR_serie2.png){width="100%"}
+T_1 <- nrow(serie_1)
+frecuencia_1 <- attr(serie_1, "frecuencia")
+unidad_1     <- attr(serie_1, "unidad")
+fuente_1     <- attr(serie_1, "fuente")
 
-![Tabla de reglas - Serie 3](../figs/tablaR_serie3.png){width="100%"}
+# Regla de partición (ajustar según lo pedido en el enunciado)
+n0_1 <- floor(0.8 * T_1)          # 80% entrenamiento
+H_1  <- frecuencia_1              # horizonte en la frecuencia de la serie
+
+origenes_h1_1 <- T_1 - n0_1
+origenes_H_1  <- T_1 - n0_1 - H_1 + 1
+
+# Fechas que delimitan cada tramo
+fecha_inicio_1 <- serie_1$fecha[1]
+fecha_corte_1  <- serie_1$fecha[n0_1]
+fecha_fin_1    <- serie_1$fecha[T_1]
+
+tabla_serie1 <- tibble(
+  Serie              = "Serie 1",
+  Unidad             = unidad_1,
+  `T`                = T_1,
+  n0                 = n0_1,
+  H                  = H_1,
+  `Orígenes (h=1)`   = origenes_h1_1,
+  `Orígenes (H)`     = origenes_H_1,
+  `Fecha inicio`     = format(fecha_inicio_1, "%Y-%m-%d"),
+  `Fecha corte (n0)` = format(fecha_corte_1, "%Y-%m-%d"),
+  `Fecha fin`        = format(fecha_fin_1, "%Y-%m-%d")
+)
+
+
+tabla_Rs1 <- kable(tabla_serie1, booktabs = TRUE, align = "c",
+      caption = "Partición de la Serie 1: $n_0$, $H$, orígenes y fechas de corte") |>
+  kable_styling(latex_options = c("hold_position", "scale_down")) |>
+  row_spec(nrow(tabla_serie1), extra_latex_after = "\\bottomrule")
+
+# tabla 2
+
+T_2 <- nrow(serie_2)
+frecuencia_2 <- attr(serie_2, "frecuencia")
+unidad_2     <- attr(serie_2, "unidad")
+fuente_2     <- attr(serie_2, "fuente")
+
+# Regla de partición (ajustar según lo pedido en el enunciado)
+n0_2 <- floor(0.8 * T_2)          # 80% entrenamiento
+H_2  <- frecuencia_2              # horizonte en la frecuencia de la serie
+
+origenes_h1_2 <- T_2 - n0_2
+origenes_H_2  <- T_2 - n0_2 - H_2 + 1
+
+# Fechas que delimitan cada tramo
+fecha_inicio_2 <- serie_2$fecha[1]
+fecha_corte_2  <- serie_2$fecha[n0_2]
+fecha_fin_2    <- serie_2$fecha[T_2]
+
+tabla_serie2 <- tibble(
+  Serie              = "Serie 2",
+  Unidad             = unidad_2,
+  `T`                = T_2,
+  n0                 = n0_2,
+  H                  = H_2,
+  `Orígenes (h=1)`   = origenes_h1_2,
+  `Orígenes (H)`     = origenes_H_2,
+  `Fecha inicio`     = format(fecha_inicio_2, "%Y-%m-%d"),
+  `Fecha corte (n0)` = format(fecha_corte_2, "%Y-%m-%d"),
+  `Fecha fin`        = format(fecha_fin_2, "%Y-%m-%d")
+)
+
+
+tabla_Rs2 <- kable(tabla_serie2, booktabs = TRUE, align = "c",
+                   caption = "Partición de la Serie 2: $n_0$, $H$, orígenes y fechas de corte") |>
+  kable_styling(latex_options = c("hold_position", "scale_down")) |>
+  row_spec(nrow(tabla_serie2), extra_latex_after = "\\bottomrule")
+
+
+# tabla 3
+
+T_3 <- nrow(serie_3)
+frecuencia_3 <- attr(serie_3, "frecuencia")
+unidad_3     <- attr(serie_3, "unidad")
+fuente_3     <- attr(serie_3, "fuente")
+
+# Regla de partición (ajustar según lo pedido en el enunciado)
+n0_3 <- floor(0.8 * T_3)          
+H_3  <- frecuencia_3              
+
+origenes_h1_3 <- T_3 - n0_3
+origenes_H_3  <- T_3 - n0_3 - H_3 + 1
+
+# Fechas que delimitan cada tramo
+fecha_inicio_3 <- serie_3$fecha[1]
+fecha_corte_3  <- serie_3$fecha[n0_3]
+fecha_fin_3    <- serie_3$fecha[T_3]
+
+tabla_serie3 <- tibble(
+  Serie              = "Serie 3",
+  Unidad             = unidad_3,
+  `T`                = T_3,
+  n0                 = n0_3,
+  H                  = H_3,
+  `Orígenes (h=1)`   = origenes_h1_3,
+  `Orígenes (H)`     = origenes_H_3,
+  `Fecha inicio`     = format(fecha_inicio_3, "%Y-%m-%d"),
+  `Fecha corte (n0)` = format(fecha_corte_3, "%Y-%m-%d"),
+  `Fecha fin`        = format(fecha_fin_3, "%Y-%m-%d")
+)
+
+
+tabla_Rs3 <- kable(tabla_serie3, booktabs = TRUE, align = "c",
+                   caption = "Partición de la Serie 3: $n_0$, $H$, orígenes y fechas de corte") |>
+  kable_styling(latex_options = c("hold_position", "scale_down")) |>
+  row_spec(nrow(tabla_serie3), extra_latex_after = "\\bottomrule")
+
+```
+
+
+
+
+```{r, echo=FALSE}
+# tabla entera
+
+# 1. Combinar los tres data frames verticalmente en orden
+tabla_completa <- bind_rows(tabla_serie1, tabla_serie2, tabla_serie3)
+
+# 2. Obtener el número de filas de cada una para definir las secciones
+n1 <- nrow(tabla_serie1)
+n2 <- nrow(tabla_serie2)
+n3 <- nrow(tabla_serie3)
+
+# 3. Crear la tabla unificada con subcabeceras
+tabla_Rs_total <- kable(
+  tabla_completa, 
+  booktabs = TRUE, 
+  align = "c",
+  caption = "Partición de las Series: $n_0$, $H$, orígenes y fechas de corte"
+) |>
+  kable_styling(latex_options = c("hold_position", "scale_down"), font_size = 8) |>
+  pack_rows("Serie 1", 1, n1) |>
+  pack_rows("Serie 2", n1 + 1, n1 + n2) |>
+  pack_rows("Serie 3", n1 + n2 + 1, n1 + n2 + n3)
+
+# 4. Presentar en el documento .qmd
+tabla_Rs_total
+
+```
+
+```{r, include=FALSE}
+
+# remove para no gastar tanta memoria
+remove(T_1, frecuencia_1, unidad_1, fuente_1, n0_1, H_1, origenes_h1_1, origenes_H_1, 
+       fecha_inicio_1, fecha_corte_1, fecha_fin_1, tabla_serie1, tabla_Rs1)
+
+remove(T_2, frecuencia_2, unidad_2, fuente_2, n0_2, H_2, origenes_h1_2, origenes_H_2, 
+       fecha_inicio_2, fecha_corte_2, fecha_fin_2, tabla_serie2, tabla_Rs2)
+
+remove(T_3, frecuencia_3, unidad_3, fuente_3, n0_3, H_3, origenes_h1_3, origenes_H_3, 
+       fecha_inicio_3, fecha_corte_3, fecha_fin_3, tabla_serie3, tabla_Rs3)
+
+```
+
+
+
+<!-- ![Tabla de reglas - Serie 1](../figs/tablaR_serie1.png){width="100%"} -->
+
+<!-- ![Tabla de reglas - Serie 2](../figs/tablaR_serie2.png){width="100%"} -->
+
+<!-- ![Tabla de reglas - Serie 3](../figs/tablaR_serie3.png){width="100%"} -->
 
 # Punto 3
 
@@ -427,7 +709,7 @@ Se declara s = 12. El patrón del año se repite casi igual cada 6 meses: un mes
 
 La serie no es estacional
 
-se propone una diferencia $\nabla$ $log(yt)}$ y una transformacion $log(y_t)$ para los datos y el polinomio quedaria $1-B$
+se propone una diferencia $\nabla$ $\log(yt)$ y una transformacion $\log(y_t)$ para los datos y el polinomio quedaria $1-B$
 
 
 
@@ -437,7 +719,29 @@ se propone una diferencia $\nabla$ $log(yt)}$ y una transformacion $log(y_t)$ pa
 ## item c
 
 
+
+
+### serie 3
 ```{r}
+
+transformaciones_s3 <- list(
+  "Original (y)"                           = function(y) y,
+  "Dif. regular (d=1)"                     = function(y) diferenciar(y, d = 1, D = 0, s = 1),
+  "Dif. estacional (D=1, s=12)"            = function(y) diferenciar(y, d = 0, D = 1, s = 12),
+  "Dif. regular+estacional (d=1,D=1,s=12) " = function(y) diferenciar(y, d = 1, D = 1, s = 12)
+)
+
+
+
+
+tablaVar_s3 <- tabla_transformaciones(serie_3$y, transformaciones_s3) |>
+  dplyr::mutate(dplyr::across(where(is.numeric), ~ round(.x, 4)))
+
+
+elegida_s3 <- tablaVar_s3 |>
+  filter(abs(r1 + 0.5) > 0.15) |>     # descarta señales claras de sobre-diferenciación
+  slice_min(Varianza, n = 1) |>
+  pull(Transformacion)
 
 tablaVar_s3 |>
   kbl(caption = "Serie 3: Varianza muestral y r1 por transformación",
