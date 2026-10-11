@@ -311,7 +311,7 @@ grafico_descomposicion <- function(dec, y, unidad, nombre_estacion = "Mes (1 = e
 }
 
 
-graficar_raices <- function(coef) {
+graficar_raices <- function(coef, titulo = "") {
   
   res <- polinomio_rezago(coef)
   
@@ -326,16 +326,18 @@ graficar_raices <- function(coef) {
     y   = sin(ang)
   )
   
+  
+  limite <- max(1.5, abs(res$real), abs(res$imag), na.rm = TRUE) * 1.2
+  
   ggplot() +
-    geom_path(data = circulo, aes(x, y), linetype = "dashed", color = "gray50") +
+    geom_path(data = circulo, aes(x, y), linetype = "solid", color = "#196F39") +
     geom_hline(yintercept = 0, color = "gray80") +
     geom_vline(xintercept = 0, color = "gray80") +
-    geom_point(data = res, aes(real, imag), color = "red", size = 3) +
+    geom_point(data = res, aes(real, imag), color = "darkred", size = 3) +
     geom_text(data = res, aes(real, imag, label = round(modulo, 2)),
               vjust = -1, size = 3.5) +
-    coord_equal(xlim = c(-2, 2), ylim = c(-2, 2)) +
-    labs(title = "Raíces del polinomio de rezago c(B)",
+    coord_equal(xlim = c(-limite, limite), ylim = c(-limite, limite)) +
+    labs(title = titulo,
          x = "Parte Real", y = "Parte Imaginaria") +
     theme_minimal()
 }
-

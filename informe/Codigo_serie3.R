@@ -93,12 +93,12 @@ ggsave(
   dpi = 300
 )
 
-corr_serie3 <- correlograma(serie_3,NULL)
+corre_serie3 <- correlograma(serie_3,NULL)
 
 # Guardar gráfico
 ggsave(
   "figs/correlograma_serie3.png",
-  plot = corr_serie3$panel,
+  plot = corre_serie3$panel,
   width = 8,
   height = 5,
   dpi = 300
@@ -179,39 +179,128 @@ ggsave(
 
 #---- operacionde rezago ----
 
-op_Rs6_serie3 <- diferenciar(serie_3$y, 1, 1, 6)
 
-op_Rs12_serie3 <- diferenciar(serie_3$y, 1, 1, 12)
+
+op_Rs6_serie3 <- diferenciar(serie_3$y, 0, 1, 6)
+
+op_Rs12_serie3 <- diferenciar(serie_3$y, 0, 1, 12)
 
 
 
 #---- coeficientes de polinomio ----
 
-# estacionalidad 6
+# # estacionalidad 6
+# 
+# w_s3  <- op_Rs6_serie3
+# n_s3  <- length(w_s3)
+# w_cs3 <- w_s3 - mean(w_s3)        # centrar la serie
+# 
+# 
+# 
+# gamma0_s3 <- sum(w_cs3 * w_cs3) / n_s3
+# gamma1_s3 <- sum(w_cs3[1:(n_s3-1)] * w_cs3[2:n_s3]) / n_s3
+# gamma2_s3 <- sum(w_cs3[1:(n_s3-2)] * w_cs3[3:n_s3]) / n_s3
+# 
+# # sistema lineal series 3
+# 
+# Gamma_s3 <- matrix(c(gamma0_s3, gamma1_s3,
+#                      gamma1_s3, gamma0_s3), nrow = 2, byrow = TRUE)
+# g_s3 <- c(gamma1_s3, gamma2_s3)
+# 
+# # solucion del sistemas
+# coef_s3 <- solve(Gamma_s3, g_s3)
+# 
+# polinomio_rezago(coef_s3)
+# 
+# serie3_s6 <- serie_3 |> 
+#   rename(valores = y) |> 
+#   slice(1:(n()-7)) |> 
+#   mutate(y = op_Rs6_serie3)
+# 
+# graficar_serie(serie3_s6, "serie diferenciada s= 6")
+# 
+# 
+# graficar_raices(coef_s3)
 
-w_s3  <- op_Rs12_serie3
-n_s3  <- length(w_s3)
-w_cs3 <- w_s3 - mean(w_s3)        # centrar la serie
+# estacionalidad 12
+
+w12_s3  <- op_Rs12_serie3
+n12_s3  <- length(w12_s3)
+w12_cs3 <- w12_s3 - mean(w12_s3)        # centrar la serie
 
 
 
-gamma0_s3 <- sum(w_cs3 * w_cs3) / n_s3
-gamma1_s3 <- sum(w_cs3[1:(n_s3-1)] * w_cs3[2:n_s3]) / n_s3
-gamma2_s3 <- sum(w_cs3[1:(n_s3-2)] * w_cs3[3:n_s3]) / n_s3
+gamma0_s3_12 <- sum(w12_cs3 * w12_cs3) / n12_s3
+gamma1_s3_12 <- sum(w12_cs3[1:(n12_s3-1)] * w12_cs3[2:n12_s3]) / n12_s3
+gamma2_s3_12 <- sum(w12_cs3[1:(n12_s3-2)] * w12_cs3[3:n12_s3]) / n12_s3
+
+
 
 # sistema lineal series 3
 
-Gamma_s3 <- matrix(c(gamma0_s3, gamma1_s3,
-                     gamma1_s3, gamma0_s3), nrow = 2, byrow = TRUE)
-g_s3 <- c(gamma1_s3, gamma2_s3)
+Gamma_s3_12 <- matrix(c(gamma0_s3_12, gamma1_s3_12,
+                     gamma1_s3_12, gamma0_s3_12), nrow = 2, byrow = TRUE)
+g_s3_12 <- c(gamma1_s3_12, gamma2_s3_12)
+
+# solucion diferenciada
+coef_s3_12 <- solve(Gamma_s3_12, g_s3_12)
+
+polinomio_rezago(coef_s3_12)
+
+serie3_s12 <- serie_3 |> 
+  rename(valores = y) |> 
+  slice(1:(n()-12)) |> 
+  mutate(y = op_Rs12_serie3)
+
+graficar_serie(serie3_s12, "serie diferenciada s=12")
 
 
-coef_s3 <- solve(Gamma_s3, g_s3)
-
-# solucion del sistema:
-
-coef_s1 <- solve(Gamma_s1, g_s1)
+graficar_raices(coef_s3_12, "Raizes en el plano unitario serie3")
 
 
-# estacionalidad 12
+# ---- tabla de varianza serie 3 ----
+
+transformaciones_s3 <- list(
+  "Original (y)"                           = function(y) y,
+  "Dif. regular (d=1)"                     = function(y) diferenciar(y, d = 1, D = 0, s = 1),
+  "Dif. estacional (D=1, s=12)"            = function(y) diferenciar(y, d = 0, D = 1, s = 12),
+  "Dif. regular+estacional (d=1,D=1,s=12) $/nabla$ " = function(y) diferenciar(y, d = 1, D = 1, s = 12)
+)
+
+
+tabla_transformaciones <- function(y, transformaciones) {
+  purrr::imap_dfr(transformaciones, function(f, nombre) {
+    
+    y_t <- f(y)   # serie transformada
+    
+    # correlograma() necesita un objeto con $y -> lo envolvemos en lista
+    r1_t <- correlograma(list(y = y_t), m = 1)$acf[1]
+    
+    tibble::tibble(
+      Transformacion = nombre,
+      Media    = mean(y_t),
+      Varianza = var(y_t),
+      r1       = r1_t
+    )
+  })
+}
+
+tablaVar_s3 <- tabla_transformaciones(serie_3$y, transformaciones_s3) |>
+  dplyr::mutate(dplyr::across(where(is.numeric), ~ round(.x, 4)))
+
+
+elegida_s3 <- tablaVar_s3 |>
+  filter(abs(r1 + 0.5) > 0.15) |>     # descarta señales claras de sobre-diferenciación
+  slice_min(Varianza, n = 1) |>
+  pull(Transformacion)
+
+
+tablaVar_s3 |>
+  kbl(caption = "Serie 3: Varianza muestral y r1 por transformación",
+      align = "c",
+      col.names = c("Transformación", "Media", "Varianza", "r1")) |>
+  kable_styling(full_width = FALSE,
+                bootstrap_options = c("striped", "hover", "condensed")) |>
+  row_spec(which(tabla_s1$Transformacion == elegida_s3),
+           bold = TRUE, color = "white", background = "#2E8B57")
 

@@ -421,8 +421,35 @@ Se declara s = 12. El patrón del año se repite casi igual cada 6 meses: un mes
 
 # Punto 4
 
-## b
+## item b
 
 **serie 1**
 
-se propone una diferencia $\nabla^2 log(yt)}$ y una transformacion $log(y_t)$ para los datos y el polinomio quedaria $1-B - B^{12} +B^{13}$
+La serie no es estacional
+
+se propone una diferencia $\nabla$ $log(yt)}$ y una transformacion $log(y_t)$ para los datos y el polinomio quedaria $1-B$
+
+
+
+**serie 2**
+
+
+## item c
+
+
+```{r}
+
+tablaVar_s3 |>
+  kbl(caption = "Serie 3: Varianza muestral y r1 por transformación",
+      align = "c",
+      col.names = c("Transformación", "Media", "Varianza", "r1")) |>
+  kable_styling(full_width = FALSE,
+                bootstrap_options = c("striped", "hover", "condensed")) |>
+  row_spec(which(tablaVar_s3$Transformacion == elegida_s3),
+           bold = TRUE, color = "white", background = "#2E8B57")
+
+
+
+```
+
+

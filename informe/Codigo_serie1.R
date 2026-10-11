@@ -166,7 +166,7 @@ serie_1log <- serie_1 |>
 
 graficar_serie(serie_1log, "consumo mensual de agua ")
 
-# operaciones de rezago
+#----operaciones de rezago----
 
 # elegir_d(serie_1log$y)
 # 
