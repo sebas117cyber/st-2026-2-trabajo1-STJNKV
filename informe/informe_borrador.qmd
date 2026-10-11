@@ -156,6 +156,7 @@ Se eliminó la tendencia mediante una media móvil centrada de orden 12 y se eva
 
 Las hipótesis planteadas son:
 
+<<<<<<< HEAD
 $$\begin{aligned}
 H_0 &: \mu_1=\mu_2=\cdots=\mu_{12}\\
 H_1 &: \text{al menos una media mensual es distinta.}
@@ -166,6 +167,24 @@ El estadístico de prueba se define como
 $$F=\frac{SSB/(s-1)}{SSW/(N-s)},$$
 
 $$F\sim F_{11,146}.$$
+=======
+$$
+\begin{aligned}
+H_0 &: \mu_1=\mu_2=\cdots=\mu_{12}\\
+H_1 &: \text{al menos una media mensual es distinta.}
+\end{aligned}
+$$
+
+El estadístico de prueba se define como
+
+$$
+F=\frac{SSB/(s-1)}{SSW/(N-s)},
+$$
+
+$$
+F\sim F_{11,146}.
+$$
+>>>>>>> f6f92c0c12e57ae58d34424a1dea528d0d617dfc
 
 Con un nivel de significancia del (5,%), se rechaza $H_0$ si $(F>1{,}855)$.
 
@@ -198,17 +217,33 @@ knitr::kable(
 
 Hipótesis:
 
+<<<<<<< HEAD
 $$\begin{aligned}
 H_0 &: \mu_1=\mu_2=\cdots=\mu_7,\\
 H_1 &: \text{al menos un día tiene una media distinta.}
 \end{aligned}$$
+=======
+$$
+\begin{aligned}
+H_0 &: \mu_1=\mu_2=\cdots=\mu_7,\\
+H_1 &: \text{al menos un día tiene una media distinta.}
+\end{aligned}
+$$
+>>>>>>> f6f92c0c12e57ae58d34424a1dea528d0d617dfc
 
 Donde $(\mu_1)$ corresponde al lunes y las demás medias representan los días restantes de la semana.
 
 Estadístico de prueba:
 
+<<<<<<< HEAD
 $$F=\frac{SSB/(s-1)}{SSW/(N-s)},
 \qquad F\sim F_{6,213}\text{ bajo }H_0.$$
+=======
+$$
+F=\frac{SSB/(s-1)}{SSW/(N-s)},
+\qquad F\sim F_{6,213}\text{ bajo }H_0.
+$$
+>>>>>>> f6f92c0c12e57ae58d34424a1dea528d0d617dfc
 
 Con un nivel de significancia del $(5\%)$, la región de rechazo es $(F>2,141)$.
 
@@ -418,6 +453,11 @@ Se eligió la descomposición aditiva porque el nivel de la serie se mantiene ce
 La tendencia del caudal se mantiene estable a lo largo de los años. Se observa un patrón estacional marcado, con caudales altos en febrero y entre julio y septiembre, y bajos en mayo y entre octubre y diciembre. Los residuos oscilan alrededor de cero, con una desviación estándar de 9,5 m³/s, aunque persiste cierta dependencia de corto plazo que se analiza en la sección 5.
 
 Se declara s = 12. El patrón del año se repite casi igual cada 6 meses: un mes y el que viene seis meses después difieren entre 1,3 y 12,6 m³/s, poco frente a los 79,3 m³/s de amplitud. Por eso el componente dominante es semestral. Pero las diferencias no son cero (la mayor es junio frente a diciembre), y un período de 12 incluye el caso de 6 sin perder esa diferencia. Además, el residuo queda casi igual con 12 y con 6 (9,54 y 9,42 m³/s), así que usar 12 no empeora el ajuste.
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> f6f92c0c12e57ae58d34424a1dea528d0d617dfc
 
 # Punto 4
 

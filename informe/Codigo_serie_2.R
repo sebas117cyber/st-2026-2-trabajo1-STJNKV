@@ -3,7 +3,7 @@
 serie_2 <- leer_serie("datos/STJNKV-serie-2.csv", "estación de monitoreo del centro de Villa Clara", 
                       "µg/m³")
 
-# ficha
+#----ficha----
 
 ficha_st2 <- crear_ficha(serie_2, "concentracion de PM2.5  2025-02-03 a 2025-09-10")
 
@@ -19,7 +19,7 @@ remove(ficha_st2, tabla_ficha2)
 
 
 
-# tabla 2
+# --- tabla 2 ----
 
 T_2 <- nrow(serie_2)
 frecuencia_2 <- attr(serie_2, "frecuencia")
@@ -64,20 +64,51 @@ remove(T_2, frecuencia_2, unidad_2, fuente_2, n0_2, H_2, origenes_h1_2, origenes
 
 
 
-# grafico
+# ----grafico ----
 
 serie2_graf <- graficar_serie(serie_2, "concentracion de PM2.5  2025-02-03 a 2025-09-10")
 
-corre_serie1 <- correlograma(serie_2)
+corre_serie2 <- correlograma(serie_2)
 
 
 
 
-elegir_d(serie_2$y)
+# elegir_d(serie_2$y)
+# 
+# elegir_D(serie_2$y, s= 12, D_max = 1)
 
-elegir_D(serie_2$y, s= 12, D_max = 1)
+
+# operacion de rezago
+op_rezago_serie2 <- diferenciar(serie_2$y, 1, 0)
 
 
+#---- polinomio ----
 
-# (1-B) (1-B^12)
-op_rezago_serie2 <- diferenciar(serie_2$y, 1, 0, 0)
+w_s2 <- op_rezago_serie2
+
+n_s2 <- length(w_s2)
+
+w_cs2 <- w_s2 - mean(w_s2)
+
+
+gamma0_s2 <- sum(w_s2 * w_s2) / n_s2
+gamma1_s2 <- sum(w_s2[1:(n_s2-1)] * w_s2[2:n_s2]) / n_s2
+gamma2_s2 <- sum(w_s2[1:(n_s2-2)] * w_s2[3:n_s2]) / n_s2
+
+# sistema lineal series 1
+
+Gamma_s2 <- matrix(c(gamma0_s2, gamma1_s2,
+                     gamma1_s2, gamma0_s2), nrow = 2, byrow = TRUE)
+
+g_s2 <- c(gamma1_s2, gamma2_s2)
+
+# solucion del sistema:
+
+coef_s2 <- solve(Gamma_s2, g_s2)
+
+# raizes del sistema
+polinomio_rezago(coef_s2)
+
+graficar_raices(coef_s2)
+
+

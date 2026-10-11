@@ -49,7 +49,7 @@ save_kable(tabla_ficha1, file = "figs/ficha_serie1.png")
 
 remove(tabla_ficha1, ficha_st1)
 
-# tabla
+#----- tabla------
 
 T_1 <- nrow(serie_1)
 frecuencia_1 <- attr(serie_1, "frecuencia")
@@ -92,7 +92,10 @@ save_kable(tabla_Rs1, file = "figs/tablaR_serie1.png")
 remove(T_1, frecuencia_1, unidad_1, fuente_1, n0_1, H_1, origenes_h1_1, origenes_H_1, 
        fecha_inicio_1, fecha_corte_1, fecha_fin_1, tabla_serie1, tabla_Rs1)
 
-# grafico
+
+
+
+#---- grafico---#
 
 serie1_graf <- graficar_serie(serie_1, "consumo mensual de agua potable 2011-2025")
 
@@ -114,7 +117,7 @@ graficar_serie(serie_1log, "consumo mensual de agua ")
 # 
 # elegir_D(serie_1log$y, s= 12, D_max = 5)
 
-# (1-B) (1-B^12)
+# (1-B)
 op_rezago_serie1 <- diferenciar(serie_1log$y, 1, 0)
 
 
@@ -156,5 +159,35 @@ polinomio_rezago(coef_s1)
 
 
 
+
+graficar_raices <- function(coef) {
+  
+  res <- polinomio_rezago(coef)
+  
+  # Partes real e imaginaria de cada raíz
+  res$real <- Re(res$raiz)
+  res$imag <- Im(res$raiz)
+  
+  # Círculo unitario de referencia
+  circulo <- tibble::tibble(
+    ang = seq(0, 2*pi, length.out = 200),
+    x   = cos(ang),
+    y   = sin(ang)
+  )
+  
+  ggplot() +
+    geom_path(data = circulo, aes(x, y), linetype = "dashed", color = "gray50") +
+    geom_hline(yintercept = 0, color = "gray80") +
+    geom_vline(xintercept = 0, color = "gray80") +
+    geom_point(data = res, aes(real, imag), color = "red", size = 3) +
+    geom_text(data = res, aes(real, imag, label = round(modulo, 2)),
+              vjust = -1, size = 3.5) +
+    coord_equal(xlim = c(-2, 2), ylim = c(-2, 2)) +
+    labs(title = "Raíces del polinomio de rezago c(B)",
+         x = "Parte Real", y = "Parte Imaginaria") +
+    theme_minimal()
+}
+
+graficar_raices(coef_s1)
 
 
