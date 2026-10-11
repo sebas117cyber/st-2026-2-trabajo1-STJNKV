@@ -1,5 +1,10 @@
 # serie 2
 
+source("R/00-lectura.R")
+source("R/01-graficos.R")
+source("R/02-operadores.R")
+source("R/03-dependencia.R")
+
 serie_2 <- leer_serie("datos/STJNKV-serie-2.csv", "estación de monitoreo del centro de Villa Clara", 
                       "µg/m³")
 
@@ -66,11 +71,63 @@ remove(T_2, frecuencia_2, unidad_2, fuente_2, n0_2, H_2, origenes_h1_2, origenes
 
 # ----grafico ----
 
+
+
 serie2_graf <- graficar_serie(serie_2, "concentracion de PM2.5  2025-02-03 a 2025-09-10")
+
+ggsave(
+  "figs/grafico_serie2.png",
+  plot = serie2_graf,
+  width = 8,
+  height = 5,
+  dpi = 300
+)
 
 corre_serie2 <- correlograma(serie_2)
 
+ggsave(
+  "figs/correlograma_serie2.png",
+  plot = corre_serie2$panel,
+  width = 8,
+  height = 5,
+  dpi = 300
+)
 
+png(
+  "figs/rezagos_serie2.png",
+  width = 2400,
+  height = 1500,
+  res = 300
+)
+
+grafico_rezagos(
+  serie_2$y,
+  c(1, 2),
+  unidad = "µg/m³",
+  nombre = "Concentración diaria de PM2.5 en una estación de monitoreo"
+)
+
+dev.off()
+
+
+
+#Item b
+y2 <- serie_2$y
+
+s2   <- 7
+pos2 <- ((seq_along(y2) - 1) %% s2) + 1  # 1 = lunes, ..., 7 = domingo
+
+# prueba F
+f2 <- f_estacional(y2, pos2, s2)
+
+
+
+r2 <- acf_muestral(y2, 24)
+r2[c("7", "14", "21")]
+1.96 / sqrt(length(y2))     
+round(f2$medias, 2)
+max(f2$medias) - min(f2$medias)
+sd(y2)
 
 
 # elegir_d(serie_2$y)
@@ -78,11 +135,11 @@ corre_serie2 <- correlograma(serie_2)
 # elegir_D(serie_2$y, s= 12, D_max = 1)
 
 
-# operacion de rezago
+# -----operacion de rezago----
 op_rezago_serie2 <- diferenciar(serie_2$y, 1, 0)
 
 
-#---- polinomio ----
+# polinomio 
 
 w_s2 <- op_rezago_serie2
 

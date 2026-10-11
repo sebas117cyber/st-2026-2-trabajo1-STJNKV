@@ -1,42 +1,16 @@
 # serie 1
 
+source("R/00-lectura.R")
+source("R/01-graficos.R")
+source("R/02-operadores.R")
+source("R/03-dependencia.R")
+
+
 serie_1 <- leer_serie("datos/STJNKV-serie-1.csv", "CORPALMAS acueducto", "miles m³")
 
 
-# ficha tecnica
-crear_ficha <- function(serie, nombre = "Serie 1", unidad = attr(serie, "unidad")) {
-  
-  freq <- attr(serie, "frecuencia")
-  if (is.null(freq)) freq <- 1
-  
-  frecuencia_label <- switch(as.character(freq),
-                             "12"  = "Mensual",
-                             "4"   = "Trimestral",
-                             "1"   = "Anual",
-                             "52"  = "Semanal",
-                             "365" = "Diaria",
-                             as.character(freq))
-  
-  fecha_ini <- as.character(min(serie$fecha, na.rm = TRUE))
-  fecha_fin <- as.character(max(serie$fecha, na.rm = TRUE))
-  val       <- serie$y
-  
-  tibble(
-    Característica = c("Nombre", "Unidad", "Frecuencia",
-                       "Fecha inicial", "Fecha final",
-                       "T (observaciones)", "Mínimo",
-                       "Máximo", "Media"),
-    Valor = c(as.character(nombre),
-              as.character(if (is.null(unidad)) "sin unidad" else unidad),
-              frecuencia_label,
-              fecha_ini,
-              fecha_fin,
-              as.character(length(val)),
-              as.character(round(min(val, na.rm = TRUE), 2)),
-              as.character(round(max(val, na.rm = TRUE), 2)),
-              as.character(round(mean(val, na.rm = TRUE), 2)))
-  )
-}
+# ----ficha tecnica-----
+
 
 ficha_st1 <- crear_ficha(serie_1, "consumo mensual de agua potable 2011-2025", "m³")
 
@@ -48,6 +22,7 @@ tabla_ficha1 <- kable(ficha_st1, booktabs = TRUE, align = c("l", "l"),
 save_kable(tabla_ficha1, file = "figs/ficha_serie1.png")
 
 remove(tabla_ficha1, ficha_st1)
+
 
 #----- tabla------
 
@@ -95,13 +70,93 @@ remove(T_1, frecuencia_1, unidad_1, fuente_1, n0_1, H_1, origenes_h1_1, origenes
 
 
 
-#---- grafico---#
+#----graficos---#
 
-serie1_graf <- graficar_serie(serie_1, "consumo mensual de agua potable 2011-2025")
+grafico_serie1 <- graficar_serie(serie_1, "consumo mensual de agua potable 2011-2025")
+
+# Guardar gráfico
+ggsave(
+  "figs/grafico_serie1.png",
+  plot = grafico_serie1,
+  width = 8,
+  height = 5,
+  dpi = 300
+)
+
 
 corre_serie1 <- correlograma(serie_1)
 
-# reza_serie1 <- corre_serie1$acf
+
+ggsave(
+  "figs/correlograma_serie1.png",
+  plot = corre_serie1$panel,
+  width = 8,
+  height = 5,
+  dpi = 300
+)
+
+
+png(
+  "figs/rezagos_serie.png",
+  width = 2400,
+  height = 1500,
+  res = 300
+)
+
+#grafico de los rezagos 
+grafico_rezagos(
+  serie_1$y,
+  c(1, 12, 24),
+  unidad = "miles de m³",
+  nombre = "Gráfico de rezagos - Serie 1"
+)
+
+dev.off()
+
+# Frecuencia de la serie 1
+frecuencia_serie1 <- attr(serie_1, "frecuencia")
+y1 <- serie_1$y
+
+# Quitar la tendencia
+tend1 <- media_movil_centrada(y1, frecuencia_serie1)
+sin_tend1 <- y1 - tend1
+
+# Posición dentro del ciclo estacional
+pos1 <- ((seq_along(y1) - 1) %% frecuencia_serie1) + 1
+
+# Prueba de estacionalidad
+f1 <- f_estacional(sin_tend1, pos1, frecuencia_serie1)
+
+# Guardar los resultados
+resultado_estacionalidad_1 <- list(
+  F = f1$F,
+  critico = f1$critico,
+  p = f1$p,
+  gl1 = f1$gl1,
+  gl2 = f1$gl2
+)
+
+#Grafico de la serie despues de quitar la tendencia 
+png(
+  filename = "figs/serie1_sin_tendencia.png",
+  width = 1200,
+  height = 800,
+  res = 150
+)
+
+plot(
+  sin_tend1,
+  type = "l",
+  main = "Consumo mensual de agua potable sin tendencia",
+  xlab = "Tiempo",
+  ylab = "Valor sin tendencia (miles de m³)"
+)
+
+abline(h = 0, lty = 2)
+
+dev.off()
+
+
 
 
 # serie con los valores transformados en log
@@ -158,35 +213,6 @@ coef_s1 <- solve(Gamma_s1, g_s1)
 polinomio_rezago(coef_s1)
 
 
-
-
-graficar_raices <- function(coef) {
-  
-  res <- polinomio_rezago(coef)
-  
-  # Partes real e imaginaria de cada raíz
-  res$real <- Re(res$raiz)
-  res$imag <- Im(res$raiz)
-  
-  # Círculo unitario de referencia
-  circulo <- tibble::tibble(
-    ang = seq(0, 2*pi, length.out = 200),
-    x   = cos(ang),
-    y   = sin(ang)
-  )
-  
-  ggplot() +
-    geom_path(data = circulo, aes(x, y), linetype = "dashed", color = "gray50") +
-    geom_hline(yintercept = 0, color = "gray80") +
-    geom_vline(xintercept = 0, color = "gray80") +
-    geom_point(data = res, aes(real, imag), color = "red", size = 3) +
-    geom_text(data = res, aes(real, imag, label = round(modulo, 2)),
-              vjust = -1, size = 3.5) +
-    coord_equal(xlim = c(-2, 2), ylim = c(-2, 2)) +
-    labs(title = "Raíces del polinomio de rezago c(B)",
-         x = "Parte Real", y = "Parte Imaginaria") +
-    theme_minimal()
-}
 
 graficar_raices(coef_s1)
 

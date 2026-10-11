@@ -309,3 +309,33 @@ grafico_descomposicion <- function(dec, y, unidad, nombre_estacion = "Mes (1 = e
   
   patchwork::wrap_plots(p1, p2, p3, ncol = 1)
 }
+
+
+graficar_raices <- function(coef) {
+  
+  res <- polinomio_rezago(coef)
+  
+  # Partes real e imaginaria de cada raíz
+  res$real <- Re(res$raiz)
+  res$imag <- Im(res$raiz)
+  
+  # Círculo unitario de referencia
+  circulo <- tibble::tibble(
+    ang = seq(0, 2*pi, length.out = 200),
+    x   = cos(ang),
+    y   = sin(ang)
+  )
+  
+  ggplot() +
+    geom_path(data = circulo, aes(x, y), linetype = "dashed", color = "gray50") +
+    geom_hline(yintercept = 0, color = "gray80") +
+    geom_vline(xintercept = 0, color = "gray80") +
+    geom_point(data = res, aes(real, imag), color = "red", size = 3) +
+    geom_text(data = res, aes(real, imag, label = round(modulo, 2)),
+              vjust = -1, size = 3.5) +
+    coord_equal(xlim = c(-2, 2), ylim = c(-2, 2)) +
+    labs(title = "Raíces del polinomio de rezago c(B)",
+         x = "Parte Real", y = "Parte Imaginaria") +
+    theme_minimal()
+}
+
