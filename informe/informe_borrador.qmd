@@ -95,6 +95,349 @@ Caudal medio mensual, en m³/s, del río Sinuoso en la bocatoma del acueducto, m
 
 # Punto 3
 
+## Item a
+
+### Serie 1
+
+![Gráfico de la serie 1.](../figs/grafico_serie1.png)
+
+Figura 1: Consumo mensual de agua potable. El consumo de agua sube con los años: empezó cerca de 400 miles de m³ en 2012 y llegó a cerca de 605 miles de m³ a finales de 2025. Pero no sube igual todo el tiempo. Hasta 2019 sube despacio, y desde 2020 sube mucho más rápido. No se ve con claridad ningún otro patrón, como subidas y bajadas que se repitan cada año.
+
+![Correlograma de la serie 1.](../figs/correlograma_serie1.png)
+
+Figura 2: ACF y PACF de la serie 1. En el gráfico de la ACF, la relación entre los rezagos y los anteriores es muy alta (cerca de 1 al inicio) y baja muy despacio al aumentar los rezagos. Esto confirma que la serie tiene una tendencia. En la PACF solo el primer rezago es significativo, con un valor cercano a 1. Los demás quedan dentro de las bandas, cerca de cero, y se comportan como ruido. Esto quiere decir que, una vez que se tiene en cuenta el rezago anterior, los rezagos más lejanos casi no aportan información nueva.
+
+![Grafico de rezagos serie 1.](../figs/rezagos_serie.png)
+
+Figura 3: Se escogieron los rezagos 1, 12 y 24. El rezago 1 compara cada mes con el mes anterior. Los rezagos 12 y 24 comparan cada mes con el mismo mes de uno y de dos años atrás, y sirven para ver si el consumo se repite cada año. En los tres gráficos los puntos forman una línea que sube, lo que significa que un mes con consumo alto viene después de meses con consumo alto. En el rezago 1 los puntos quedan muy pegados a la línea, y en los rezagos 12 y 24 se van abriendo un poco. Esto es coherente con la tendencia de la serie.
+
+### Serie 2
+
+![Grafico de la serie 2.](../figs/grafico_serie2.png)
+
+Figura 4: La concentración sube y baja todos los días, pero siempre alrededor de un mismo nivel, cerca de 35 µg/m³. No se ve que con el paso de los meses vaya subiendo o bajando, así que no hay tendencia. Los valores casi siempre están entre 25 y 45 µg/m³, y esa variación se mantiene. Tampoco se ve un patrón que se repita con claridad, como una semana más contaminada que otra.
+
+![Correlograma de la serie 2.](../figs/correlograma_serie2.png)
+
+Figura 5: En la ACF, los rezagos 1 y 2 son los únicos claramente altos: el primero es cerca de 0,6 y el segundo cerca de 0,2. Es decir, un día se parece al día anterior y, un poco menos, al de dos días atrás. Después la gráfica pasa a valores negativos pequeños y vuelve a subir un poco, como una onda suave, pero casi todos esos valores quedan dentro de las bandas, así que pueden ser solo azar.En la PACF solo los rezagos 1 y 2 son significativos: el 1 es positivo (cerca de 0,6) y el 2 es negativo (cerca de −0,25). Los demás quedan dentro de las bandas. Esto quiere decir que, para entender el valor de hoy, bastan los dos días anteriores.
+
+![Grafico de rezagos serie 2.](../figs/rezagos_serie2.png)
+
+Figura 6: Gráfico de rezagos de la serie 2. Se escogieron los rezagos 1 y 2, porque son los únicos que se destacan en los gráficos anteriores. El rezago 1 compara cada día con el día anterior, y el rezago 2 lo compara con el de dos días atrás. En el rezago 1 los puntos suben en una línea con bastante dispersión: si ayer hubo mucha contaminación, hoy suele haber bastante también, aunque no siempre. En el rezago 2 la línea casi no se inclina y los puntos quedan muy dispersos, así que anteayer dice poco sobre hoy
+
+### Serie 3
+
+![Grafico de la serie 3.](../figs/grafico_serie3.png)
+
+Figura 7: El caudal sube y baja de forma muy regular, siempre alrededor de un mismo nivel, cerca de 155 m³/s. No se ve que con los años el río vaya llevando más o menos agua, así que no hay tendencia. Lo que sí se ve con claridad es un patrón que se repite: cada año aparecen dos épocas de caudal alto y dos de caudal bajo. Los valores más bajos rondan los 100 m³/s y los más altos llegan cerca de 200 m³/s.
+
+![Correlograma de la serie 3.](../figs/correlograma_serie3.png)
+
+Figura 8: En la ACF se ve una onda que sube y baja de forma muy regular y no se apaga con los rezagos. Los valores son positivos y altos en los rezagos 6, 12, 18 y 24 (cerca de 0,8), y negativos y de tamaño parecido en los rezagos 3, 9, 15 y 21 (cerca de −0,8). Esto quiere decir que un mes se parece mucho al de 6 meses atrás y al de 12, y es casi lo contrario del de 3 o 9 meses atrás. Es la huella de un ciclo que se repite, y casi todos esos picos quedan fuera de las bandas. En la PACF los rezagos del 1 al 6, el 8, el 9 y el 12 son significativos, y después del 12 los valores quedan cerca de cero, dentro de las bandas. Esto sugiere que la dependencia se concentra en el último año: para entender un mes, importa lo que pasó en los 12 meses anteriores, y lo anterior a eso casi no agrega nada.
+
+![Grafico de rezagos serie 3.](../figs/rezagos_serie03.png)
+
+Figura 9: Se escogieron los rezagos 1, 2, 3, 4, 5, 6, 8, 9 y 12, que son los que más se destacan en la PACF. Cada gráfico compara el caudal de un mes con el de algunos meses antes. Lo que se ve es que la inclinación de la línea cambia de signo según el rezago. En los rezagos 6 y 12 los puntos suben en una línea, y en el 12 quedan bastante pegados a ella: un mes con caudal alto viene seis y doce meses después de otro con caudal alto. En los rezagos 3 y 9 pasa lo contrario, los puntos bajan: un mes con caudal alto viene tres y nueve meses después de uno con caudal bajo
+
+## Item b
+
+### Serie 1
+
+de la serie 1 vemos que tiene una tendencia fuerte, para ello vamos a retirar la tendencia para validar que no este ocultando alguna estacionalidad o algun patron.
+
+```{r, echo=FALSE}
+knitr::kable(
+  data.frame(
+    `Estadístico F` = 0.4169,
+    `Valor crítico` = 1.8548,
+    `Valor p` = 0.9468,
+    `gl1` = 11,
+    `gl2` = 146,
+    check.names = FALSE
+  ),
+  digits = 4,
+  caption = "Prueba de estacionalidad de la serie 1"
+)
+```
+
+Se eliminó la tendencia mediante una media móvil centrada de orden 12 y se evaluó si existen diferencias en los niveles medios de los 12 meses del año.
+
+Las hipótesis planteadas son:
+
+$$
+\begin{aligned}
+H_0 &: \mu_1=\mu_2=\cdots=\mu_{12}\\
+H_1 &: \text{al menos una media mensual es distinta.}
+\end{aligned}
+$$
+
+El estadístico de prueba se define como
+
+$$
+F=\frac{SSB/(s-1)}{SSW/(N-s)},
+$$
+
+$$
+F\sim F_{11,146}.
+$$
+
+Con un nivel de significancia del (5,%), se rechaza $H_0$ si $(F>1{,}855)$.
+
+**Decisión:** como $(F=0{,}417<1{,}855)$ y $(p=0{,}947>0{,}05)$, no se rechaza $(H_0)$.
+
+**Interpretación:** una vez eliminada la tendencia, no se encuentra evidencia estadística de que el nivel del consumo dependa del mes. Por tanto, la tendencia no parece estar ocultando una estacionalidad mensual. En consecuencia, la serie 1 se clasifica como una serie con tendencia y sin estacionalidad detectable mediante esta prueba.
+
+![Grafico de la serie 1 sin tendencia 158 observaciones de 170](../figs/serie1_sin_tendencia.png)
+
+Figura 10: Después de quitar la tendencia, el consumo de agua oscila alrededor de cero, casi siempre entre −10 y +10 miles de $m^3$. No se ve ningún patrón que se repita cada año ni cambios en el nivel o en qué tanto varía. Hay un valor muy bajo cerca de la observación 100 (unos −18 miles de $m^3$), pero es un caso aislado y no sigue ningún mes en particular.
+
+### Serie 2
+
+En la serie 2 no se observa una tendencia ni patrones claros en el gráfico. Sin embargo, en la figura 5, correspondiente a la ACF, se aprecia un comportamiento oscilatorio, con picos que suben y bajan. Aunque los rezagos se encuentran dentro de las bandas de significancia, este patrón podría sugerir la presencia de estacionalidad, como si cada día de la semana tuviera un nivel típico de consumo. Por ello, se busca evaluar si el consumo de un día se parece al del mismo día de la semana anterior.
+
+```{r}
+knitr::kable(
+  data.frame(
+    `Estadístico F` = 0.3397971,
+    `Valor crítico` = 2.1413269,
+    `Valor p` = 0.9152254,
+    `gl1` = 6,
+    `gl2` = 213,
+    check.names = FALSE
+  ),
+  digits = 4,
+  caption = "Resultados de la prueba de estacionalidad de la serie 2"
+)
+```
+
+Hipótesis:
+
+$$
+\begin{aligned}
+H_0 &: \mu_1=\mu_2=\cdots=\mu_7,\\
+H_1 &: \text{al menos un día tiene una media distinta.}
+\end{aligned}
+$$
+
+Donde $(\mu_1)$ corresponde al lunes y las demás medias representan los días restantes de la semana.
+
+Estadístico de prueba:
+
+$$
+F=\frac{SSB/(s-1)}{SSW/(N-s)},
+\qquad F\sim F_{6,213}\text{ bajo }H_0.
+$$
+
+Con un nivel de significancia del $(5\%)$, la región de rechazo es $(F>2,141)$.
+
+Decisión: como $(F=0,340<2,141)$ y $(p=0,915>0,05)$, no se rechaza $(H_0)$.
+
+Interpretación: no se encuentra evidencia estadística de que el nivel medio de PM2,5 dependa del día de la semana.
+
+```{r}
+
+knitr::kable(
+  data.frame(
+    Rezago = c(7, 14, 21),
+    Autocorrelacion = c(-0.0587, -0.1630, 0.0654),
+    Limite_significancia = c(0.1321, 0.1321, 0.1321)
+  ),
+  digits = 4,
+  caption = "Autocorrelación en los rezagos semanales de la serie 2"
+)
+```
+
+```{r}
+knitr::kable(
+  data.frame(
+    Día = c(
+      "Lunes", "Martes", "Miércoles", "Jueves",
+      "Viernes", "Sábado", "Domingo"
+    ),
+    Media = c(35.07, 34.45, 34.12, 34.58, 34.73, 35.06, 35.07)
+  ),
+  digits = 2,
+  caption = "Media de PM2,5 por día de la semana"
+)
+```
+
+```{r}
+knitr::kable(
+  data.frame(
+    Medida = c(
+      "Diferencia entre la media máxima y mínima",
+      "Desviación estándar de la serie"
+    ),
+    Valor = c(0.953, 3.542)
+  ),
+  digits = 3,
+  caption = "Resumen descriptivo de la serie 2"
+)
+```
+
+No hay estacionalidad semanal: la concentración de un día no se parece a la del mismo día de la semana anterior (r₇ = −0,06; r₂₁ = 0,07), y los promedios de los siete días son casi iguales (entre 34,1 y 35,1 µg/m³). Lo que sí se observa es una dependencia de corto plazo: la concentración de un día se parece a la del día anterior (r₁ = 0,61). Esto no es un patrón de calendario, sino una "memoria" de la serie: si ayer hubo mucha contaminación, hoy tiende a haber bastante también, sin importar qué día de la semana sea.
+
+### Serie 3
+
+```{r}
+knitr::kable(
+  data.frame(
+    `Estadístico F` = 95.27961,
+    `Valor crítico` = 1.850485,
+    `Valor p` = 2.334974e-63,
+    gl1 = 11,
+    gl2 = 156,
+    check.names = FALSE
+  ),
+  digits = 4,
+  caption = "Prueba de estacionalidad de la serie 3"
+)
+```
+
+El valor F (95,28) es mucho mayor que el valor crítico (1,85) y el valor p es prácticamente cero. Se rechaza que todos los meses tengan el mismo caudal, así que hay estacionalidad.
+
+```{r}
+knitr::kable(
+  data.frame(
+    Mes = c(
+      "Enero", "Febrero", "Marzo", "Abril",
+      "Mayo", "Junio", "Julio", "Agosto",
+      "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ),
+    Media = c(
+      171.0000, 189.9786, 179.2857, 143.3500,
+      111.1571, 121.8571, 170.1571, 182.8000,
+      183.7714, 144.8714, 117.6214, 136.3214
+    )
+  ),
+  digits = 2,
+  caption = "Media de la serie 3 por mes"
+)
+```
+
+El caudal promedio cambia mucho según el mes: febrero es el más alto (190,0 m³/s) y mayo el más bajo (111,2 m³/s). Las medias forman dos épocas altas y dos bajas.
+
+```{r}
+knitr::kable(
+  data.frame(
+    Componente = c(
+      "Entre meses (SSB)",
+      "Dentro de los meses (SSW)"
+    ),
+    `Suma de cuadrados` = c(124593.9, 18545.08),
+    check.names = FALSE
+  ),
+  digits = 2,
+  caption = "Descomposición de la variabilidad de la serie 3"
+)
+```
+
+El caudal presenta diferencias importantes según el mes del año. La variación entre los promedios mensuales es mucho mayor que la variación dentro de cada mes, lo que indica que existe un patrón estacional marcado. En particular, algunos meses tienden a registrar caudales más altos que otros.
+
+```{r}
+knitr::kable(
+  data.frame(
+    Mes = c("Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+            "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"),
+    Indice_estacional = c(
+      16.689, 36.585, 24.549, -10.715, -42.728, -31.895,
+      15.391, 29.460, 27.311, -9.327, -36.026, -19.295
+    )
+  ),
+  col.names = c("Mes", "Índice estacional"),
+  caption = "Índices estacionales de la serie 3",
+  digits = 3
+)
+```
+
+Los índices estacionales muestran que el caudal aumenta en algunos meses, especialmente en febrero, marzo y agosto, mientras que disminuye en otros, como mayo, junio y noviembre. Este comportamiento refuerza la presencia de un patrón estacional en la serie, pues el caudal tiende a variar según el mes del año.
+
+![](../figs/caudal_medio_mensual_por_anio.png)
+
+Gráfico estacional, serie 3. Cada línea es un año del caudal del río, de enero (mes 1) a diciembre (mes 12). Las 14 líneas tienen casi la misma forma: el caudal sube a principios de año (pico en febrero), baja hasta mayo, vuelve a subir a mitad de año (pico entre agosto y septiembre) y baja hasta noviembre. Que todos los años repitan este patrón muestra que la estacionalidad es real y que no depende del año.
+
+```{r}
+knitr::kable(
+  data.frame(
+    Mes = c("Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio"),
+    Diferencia = c(1.299, 7.126, -2.762, -1.388, -6.702, -12.600)
+  ),
+  col.names = c("Mes", "Diferencia entre semestres"),
+  digits = 3,
+  caption = "Diferencias entre semestres"
+)
+
+
+```
+
+Un mes y el que viene seis meses después se parecen mucho: las diferencias van de 1,3 a 12,6 m³/s, y la mayor es junio frente a diciembre. El patrón dominante es semestral, pero la diferencia no es cero.
+
+```{r}
+knitr::kable(
+  data.frame(
+    Indicador = c(
+      "Amplitud de los índices estacionales",
+      "Desviación estándar del residuo (periodicidad 12)",
+      "Desviación estándar del residuo (periodicidad 6)",
+      "Número de observaciones comunes"
+    ),
+    Resultado = c(79.313, 9.539, 9.419, 156)
+  ),
+  col.names = c("Indicador", "Resultado"),
+  digits = 3,
+  caption = "Indicadores de comparación del modelo aditivo"
+)
+```
+
+La diferencia máxima entre semestres (12,6) es pequeña frente a la amplitud de los índices (79,3). Con período 12 o con 6 el residuo queda casi igual (9,54 y 9,42), así que declarar 12 no pierde nada y conserva la diferencia entre semestres.
+
+```{r}
+knitr::kable(
+  data.frame(
+    Indicador = c(
+      "Desviación relativa del modelo aditivo",
+      "Desviación relativa del modelo multiplicativo",
+      "Correlación entre nivel y amplitud estacional",
+      "Correlación entre media y rango anual"
+    ),
+    Resultado = c(0.06210389, 0.06276788, 0.11007311, 0.152342)
+  ),
+  col.names = c("Indicador", "Resultado"),
+  digits = 4,
+  caption = "Comparación de los tipos de descomposición"
+)
+
+```
+
+Las dos versiones dejan un error casi igual (6,21 % la aditiva y 6,28 % la multiplicativa). La correlación entre nivel y amplitud es baja (0,11), así que la oscilación no crece con el nivel. Se elige la aditiva por ser más simple.
+
+```{r}
+
+knitr::kable(
+  data.frame(
+    Año = 1:14,
+    Rango = c(
+      82.5, 75.4, 98.4, 99.3, 81.4, 88.6, 75.8,
+      96.5, 90.3, 86.5, 89.9, 82.4, 81.7, 104.9
+    )
+  ),
+  col.names = c("Año", "Rango anual"),
+  digits = 1,
+  caption = "Rango anual de la serie 3"
+)
+```
+
+El rango de cada año se mueve entre 75,4 y 104,9 m³/s sin una dirección clara, y su correlación con la media anual es 0,15. La amplitud no depende del nivel, lo que respalda la aditiva.
+
+Se eligió la descomposición aditiva porque el nivel de la serie se mantiene cerca de 154 m³/s y las oscilaciones no parecen aumentar cuando el caudal sube. Esto se refleja en la baja correlación entre la media y el rango anual (0,15). Además, los errores relativos de ambos modelos son muy similares (6,21 % para el aditivo y 6,28 % para el multiplicativo), por lo que se prefiere el modelo aditivo por ser más sencillo.
+
+![Descomposición clásica aditiva de la serie 3](../figs/descomposicion_serie3.png)
+
+La tendencia del caudal se mantiene estable a lo largo de los años. Se observa un patrón estacional marcado, con caudales altos en febrero y entre julio y septiembre, y bajos en mayo y entre octubre y diciembre. Los residuos oscilan alrededor de cero, con una desviación estándar de 9,5 m³/s, aunque persiste cierta dependencia de corto plazo que se analiza en la sección 5.
+
+Se declara s = 12. El patrón del año se repite casi igual cada 6 meses: un mes y el que viene seis meses después difieren entre 1,3 y 12,6 m³/s, poco frente a los 79,3 m³/s de amplitud. Por eso el componente dominante es semestral. Pero las diferencias no son cero (la mayor es junio frente a diciembre), y un período de 12 incluye el caso de 6 sin perder esa diferencia. Además, el residuo queda casi igual con 12 y con 6 (9,54 y 9,42 m³/s), así que usar 12 no empeora el ajuste.
+
+
 
 # Punto 4
 
