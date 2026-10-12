@@ -164,7 +164,7 @@ serie_1log <- serie_1 |>
   mutate(y = log(y))
 
 
-graficar_serie(serie_1log, "consumo mensual de agua ")
+graficar_serie(serie_1log, "consumo agua mensual log ")
 
 #----operaciones de rezago----
 
@@ -186,9 +186,11 @@ graficar_serie(serie_1dif, "serie diferenciada")
 
 # polinomio
 
+
+
 # autocovarianza serie 1 diferenciada
 
-w_s1 <- op_rezago_serie1
+w_s1 <- diferenciar(serie_1$y, 1, 0)
 
 n_s1 <- length(w_s1)
 
@@ -207,13 +209,23 @@ g_s1 <- c(gamma1_s1, gamma2_s1)
 
 # solucion del sistema:
 
+coef_s1 <- c(-1) # (1-B)
+
 coef_s1 <- solve(Gamma_s1, g_s1)
+
+
 
 # raizes del sistema
 polinomio_rezago(coef_s1)
 
 
 
-graficar_raices(coef_s1)
+raiz_s1P <- graficar_raices(coef_s1)
 
-
+ggsave(
+  "figs/raiz_s1P.png",
+  plot = raiz_s1P,
+  width = 8,
+  height = 5,
+  dpi = 300
+)

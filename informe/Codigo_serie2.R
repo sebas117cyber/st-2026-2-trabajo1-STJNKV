@@ -166,6 +166,13 @@ coef_s2 <- solve(Gamma_s2, g_s2)
 # raizes del sistema
 polinomio_rezago(coef_s2)
 
-graficar_raices(coef_s2)
+raiz_s2P <- graficar_raices(coef_s2)
 
+ggsave(
+  "figs/raiz_s2P.png",
+  plot = raiz_s2P,
+  width = 8,
+  height = 5,
+  dpi = 300
+)
 

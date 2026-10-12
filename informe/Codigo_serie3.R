@@ -181,7 +181,7 @@ ggsave(
 
 
 
-op_Rs6_serie3 <- diferenciar(serie_3$y, 0, 1, 6)
+# op_Rs6_serie3 <- diferenciar(serie_3$y, 0, 1, 6)
 
 op_Rs12_serie3 <- diferenciar(serie_3$y, 0, 1, 12)
 
@@ -224,25 +224,70 @@ op_Rs12_serie3 <- diferenciar(serie_3$y, 0, 1, 12)
 
 # estacionalidad 12
 
-w12_s3  <- op_Rs12_serie3
+op_Rs12_serie3 <- diferenciar(serie_3$y, 0, 1, 12)
+
+w12_s3  <- serie_3$y
 n12_s3  <- length(w12_s3)
 w12_cs3 <- w12_s3 - mean(w12_s3)        # centrar la serie
 
 
 
 gamma0_s3_12 <- sum(w12_cs3 * w12_cs3) / n12_s3
-gamma1_s3_12 <- sum(w12_cs3[1:(n12_s3-1)] * w12_cs3[2:n12_s3]) / n12_s3
-gamma2_s3_12 <- sum(w12_cs3[1:(n12_s3-2)] * w12_cs3[3:n12_s3]) / n12_s3
+gamma1_s3_12 <- sum(w12_cs3[1:(n12_s3-12)] * w12_cs3[13:n12_s3]) / n12_s3 # gamma depende de s
+# gamma2_s3_12 <- sum(w12_cs3[1:(n12_s3-13)] * w12_cs3[14:n12_s3]) / n12_s3
+
+# indentidad gamma1 / gamma0 = r1
+
+r1_s3 <- gamma1_s3_12 / gamma0_s3_12
+r1_s3
+
+var_s3 <- 2*gamma0_s3_12 - 2 * gamma1_s3_12
+
+var_s3
+
+var(op_Rs12_serie3)
+
+#----verificacion de tendencia----
+
+# y3 <- serie_3$y
+# t  <- seq_along(y3)
+# 
+# 
+# mitad <- length(y3) %/% 2
+# var_primera_mitad  <- sum((y3[1:mitad] - mean(y3[1:mitad]))^2) / mitad
+# var_segunda_mitad  <- sum((y3[(mitad+1):length(y3)] - mean(y3[(mitad+1):length(y3)]))^2) / (length(y3)-mitad)
+# 
+# cat("Varianza 1ra mitad:", var_primera_mitad, "\n")
+# cat("Varianza 2da mitad:", var_segunda_mitad, "\n")
+# 
+# 
+# n <- length(y3)
+# media_y_t    <- mean(y3[13:n])
+# media_y_t12  <- mean(y3[1:(n-12)])
+# 
+# cat("Media y_t:", media_y_t, "\n")
+# cat("Media y_(t-12):", media_y_t12, "\n")
+# cat("Diferencia de medias:", media_y_t - media_y_t12, "\n")
 
 
 
-# sistema lineal series 3
+n  <- length(y3)
+mes <- rep(1:12, length.out = n)
+
+var_por_mes <- tapply(y3, mes, function(x) sum((x-mean(x))^2)/length(x))
+var_por_mes
+
+
+
+#----sistema lineal series 3----
 
 Gamma_s3_12 <- matrix(c(gamma0_s3_12, gamma1_s3_12,
                      gamma1_s3_12, gamma0_s3_12), nrow = 2, byrow = TRUE)
 g_s3_12 <- c(gamma1_s3_12, gamma2_s3_12)
 
 # solucion diferenciada
+coef_s3_12 <- c(rep(0, 11), -1)   
+
 coef_s3_12 <- solve(Gamma_s3_12, g_s3_12)
 
 polinomio_rezago(coef_s3_12)
@@ -255,37 +300,17 @@ serie3_s12 <- serie_3 |>
 graficar_serie(serie3_s12, "serie diferenciada s=12")
 
 
-graficar_raices(coef_s3_12, "Raizes en el plano unitario serie3")
+raiz_s3P <- graficar_raices(coef_s3_12, "Raizes en el plano unitario serie 3")
 
-
-# ---- tabla de varianza serie 3 ----
-
-transformaciones_s3 <- list(
-  "Original (y)"                           = function(y) y,
-  "Dif. regular (d=1)"                     = function(y) diferenciar(y, d = 1, D = 0, s = 1),
-  "Dif. estacional (D=1, s=12)"            = function(y) diferenciar(y, d = 0, D = 1, s = 12),
-  "Dif. regular+estacional (d=1,D=1,s=12) $/nabla$ " = function(y) diferenciar(y, d = 1, D = 1, s = 12)
+ggsave(
+  "figs/raiz_s3P.png",
+  plot = raiz_s3P,
+  width = 8,
+  height = 5,
+  dpi = 300
 )
 
 
 
-
-tablaVar_s3 <- tabla_transformaciones(serie_3$y, transformaciones_s3) |>
-  dplyr::mutate(dplyr::across(where(is.numeric), ~ round(.x, 4)))
-
-
-elegida_s3 <- tablaVar_s3 |>
-  filter(abs(r1 + 0.5) > 0.15) |>     # descarta señales claras de sobre-diferenciación
-  slice_min(Varianza, n = 1) |>
-  pull(Transformacion)
-
-
-tablaVar_s3 |>
-  kbl(caption = "Serie 3: Varianza muestral y r1 por transformación",
-      align = "c",
-      col.names = c("Transformación", "Media", "Varianza", "r1")) |>
-  kable_styling(full_width = FALSE,
-                bootstrap_options = c("striped", "hover", "condensed")) |>
-  row_spec(which(tabla_s1$Transformacion == elegida_s3),
-           bold = TRUE, color = "white", background = "#2E8B57")
+# ---- tabla de varianza serie 3 ----
 

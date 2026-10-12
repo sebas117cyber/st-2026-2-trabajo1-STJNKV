@@ -463,7 +463,7 @@ Figura 10: Después de quitar la tendencia, el consumo de agua oscila alrededor 
 
 En la serie 2 no se observa una tendencia ni patrones claros en el gráfico. Sin embargo, en la figura 5, correspondiente a la ACF, se aprecia un comportamiento oscilatorio, con picos que suben y bajan. Aunque los rezagos se encuentran dentro de las bandas de significancia, este patrón podría sugerir la presencia de estacionalidad, como si cada día de la semana tuviera un nivel típico de consumo. Por ello, se busca evaluar si el consumo de un día se parece al del mismo día de la semana anterior.
 
-```{r}
+```{r, echo=FALSE}
 knitr::kable(
   data.frame(
     `Estadístico F` = 0.3397971,
@@ -498,7 +498,7 @@ Decisión: como $(F=0,340<2,141)$ y $(p=0,915>0,05)$, no se rechaza $(H_0)$.
 
 Interpretación: no se encuentra evidencia estadística de que el nivel medio de PM2,5 dependa del día de la semana.
 
-```{r}
+```{r, echo=FALSE}
 
 knitr::kable(
   data.frame(
@@ -511,7 +511,7 @@ knitr::kable(
 )
 ```
 
-```{r}
+```{r, echo=FALSE}
 knitr::kable(
   data.frame(
     Día = c(
@@ -525,7 +525,7 @@ knitr::kable(
 )
 ```
 
-```{r}
+```{r, echo=FALSE}
 knitr::kable(
   data.frame(
     Medida = c(
@@ -543,7 +543,7 @@ No hay estacionalidad semanal: la concentración de un día no se parece a la de
 
 ### Serie 3
 
-```{r}
+```{r, echo=FALSE}
 knitr::kable(
   data.frame(
     `Estadístico F` = 95.27961,
@@ -560,7 +560,7 @@ knitr::kable(
 
 El valor F (95,28) es mucho mayor que el valor crítico (1,85) y el valor p es prácticamente cero. Se rechaza que todos los meses tengan el mismo caudal, así que hay estacionalidad.
 
-```{r}
+```{r, echo=FALSE}
 knitr::kable(
   data.frame(
     Mes = c(
@@ -581,7 +581,7 @@ knitr::kable(
 
 El caudal promedio cambia mucho según el mes: febrero es el más alto (190,0 m³/s) y mayo el más bajo (111,2 m³/s). Las medias forman dos épocas altas y dos bajas.
 
-```{r}
+```{r, echo=FALSE}
 knitr::kable(
   data.frame(
     Componente = c(
@@ -598,7 +598,7 @@ knitr::kable(
 
 El caudal presenta diferencias importantes según el mes del año. La variación entre los promedios mensuales es mucho mayor que la variación dentro de cada mes, lo que indica que existe un patrón estacional marcado. En particular, algunos meses tienden a registrar caudales más altos que otros.
 
-```{r}
+```{r, echo=FALSE}
 knitr::kable(
   data.frame(
     Mes = c("Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -620,7 +620,7 @@ Los índices estacionales muestran que el caudal aumenta en algunos meses, espec
 
 Gráfico estacional, serie 3. Cada línea es un año del caudal del río, de enero (mes 1) a diciembre (mes 12). Las 14 líneas tienen casi la misma forma: el caudal sube a principios de año (pico en febrero), baja hasta mayo, vuelve a subir a mitad de año (pico entre agosto y septiembre) y baja hasta noviembre. Que todos los años repitan este patrón muestra que la estacionalidad es real y que no depende del año.
 
-```{r}
+```{r, echo=FALSE}
 knitr::kable(
   data.frame(
     Mes = c("Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio"),
@@ -636,7 +636,7 @@ knitr::kable(
 
 Un mes y el que viene seis meses después se parecen mucho: las diferencias van de 1,3 a 12,6 m³/s, y la mayor es junio frente a diciembre. El patrón dominante es semestral, pero la diferencia no es cero.
 
-```{r}
+```{r, echo=FALSE}
 knitr::kable(
   data.frame(
     Indicador = c(
@@ -655,7 +655,7 @@ knitr::kable(
 
 La diferencia máxima entre semestres (12,6) es pequeña frente a la amplitud de los índices (79,3). Con período 12 o con 6 el residuo queda casi igual (9,54 y 9,42), así que declarar 12 no pierde nada y conserva la diferencia entre semestres.
 
-```{r}
+```{r, echo=FALSE}
 knitr::kable(
   data.frame(
     Indicador = c(
@@ -675,7 +675,7 @@ knitr::kable(
 
 Las dos versiones dejan un error casi igual (6,21 % la aditiva y 6,28 % la multiplicativa). La correlación entre nivel y amplitud es baja (0,11), así que la oscilación no crece con el nivel. Se elige la aditiva por ser más simple.
 
-```{r}
+```{r, echo=FALSE}
 
 knitr::kable(
   data.frame(
@@ -704,25 +704,117 @@ Se declara s = 12. El patrón del año se repite casi igual cada 6 meses: un mes
 # Punto 4
 
 ## item b
-
+### raizes serie 1
 **serie 1**
 
-La serie no es estacional
+La serie no es estacional por ende se propone estabilizar la varianza con una transformacion y hacer una diferencia para eliminar la tendencia  $(\nabla \log(yt))$
 
-se propone una diferencia $\nabla$ $\log(yt)$ y una transformacion $\log(y_t)$ para los datos y el polinomio quedaria $1-B$
+$z_t = \log(yt)$ estabilizara la varianza
+
+$w_t = (1-B) z_t$ elimina la tendencia
+
+$c(B)= 1-B$ seria el polinomio
+
+
+![Raizes en el plano - serie 1](../figs/raiz_s1P.png)
 
 
 
+### raizes serie 2
 **serie 2**
 
+La serie no es estacional y parece ser ruido blanco por lo que al diferenciar por $\nabla$ no se encontrara mejor pronostico que con los datos originales.
+
+$c(B)= (1-B)^0 y_t = y_t$ no hay polinomio en este caso. 
+
+
+
+<!-- ![Raizes en el plano - serie 2](../figs/raiz_s2P.png) -->
+
+
+### raizes serie 3
+
+**serie 3**
+
+Esta serie es estacional y se registra mensual con periodo 12 se propone una tranformacion $\nabla_{12}$
+
+$w_t = (1-B^{12})y_t$ elimina la estacionalidad
+
+$c(B) = 1-B^{12}$ polinomio
+
+![Raizes en el plano - serie 3](../figs/raiz_s3P.png)
+
+serian 12 raices debido al polinomio de grado 12
 
 ## item c
 
+### serie 1
+
+```{r, echo=FALSE}
+
+transformaciones_s1 <- list(
+  "Original (y)"                           = function(y) y,
+  "log(y)"                                 = function(y) log(y),
+  "Dif. regular (d=1)"                     = function(y) diferenciar(y, d = 1, D = 0, s = 1),
+  "Dif.regular y log(y)"                   = function(y) diferenciar(log(y), d = 2, D = 0, s = 1)
+)
 
 
+
+
+tablaVar_s1 <- tabla_transformaciones(serie_1$y, transformaciones_s1) |>
+  dplyr::mutate(dplyr::across(where(is.numeric), ~ round(.x, 4)))
+
+
+elegida_s1 <- tablaVar_s1 |>
+  filter(abs(r1 + 0.5) > 0.15) |>     # descarta señales claras de sobre-diferenciación
+  slice_min(Varianza, n = 1) |>
+  pull(Transformacion)
+
+tablaVar_s1 |>
+  kbl(caption = "Serie 1: Varianza muestral y r1 por transformación",
+      align = "c",
+      col.names = c("Transformación", "Media", "Varianza", "r1")) |>
+  kable_styling(full_width = FALSE,
+                bootstrap_options = c("striped", "hover", "condensed"))
+
+```
+
+La tranformacion elegida es la de una diferencia osea $\nabla y_t$ debido a que al tranformar los datos con $\log(y_t)$ se estabiliza la varianza pero al aplicarle la diferencia se sobre diferencia por el resultado de $r_1 < -0.5$ por ende no captura estacionalidad conclusion que soporta mas la no estacionalidad del punto 2. Caso contrario con una sola diferencia ya que el $r_1= -0.2969 > -0.5$ que no sobre diferencia y disminuye drasticamente la varianza. si se sigue diferenciando, r1 seria mas pequeño pero esta dejaria ruido blanco al no haber estacionalidad
+
+
+### serie 2
+
+```{r, echo=FALSE}
+
+transformaciones_s2 <- list(
+  "Original (y)"                           = function(y) y,
+  "Dif. regular (d=1)"                     = function(y) diferenciar(y, d = 1, D = 0, s = 1), 
+  "Dif. regular (d=2)"                     = function(y) diferenciar(y, d = 2, D = 0, s = 1)
+)
+
+
+
+
+tablaVar_s2 <- tabla_transformaciones(serie_2$y, transformaciones_s2) |>
+  dplyr::mutate(dplyr::across(where(is.numeric), ~ round(.x, 4)))
+
+
+
+tablaVar_s2 |>
+  kbl(caption = "Serie 2: Varianza muestral y r1 por transformación",
+      align = "c",
+      col.names = c("Transformación", "Media", "Varianza", "r1")) |>
+  kable_styling(full_width = FALSE,
+                bootstrap_options = c("striped", "hover", "condensed"))
+
+
+```
+
+Se escoge la serie original sin diferenciar debido a que se concluyo la no estacionalidad anteriormente, ademas al diferenciar una vez la varianza no cambia drasticamente comparada con la original
 
 ### serie 3
-```{r}
+```{r, echo=FALSE}
 
 transformaciones_s3 <- list(
   "Original (y)"                           = function(y) y,
@@ -756,4 +848,4 @@ tablaVar_s3 |>
 
 ```
 
-
+Se escoge la transformacion $\nabla_{12}$ debido a que es la que mas reduce la varianza y con el r1 en la mejor zona de aceptacion. Pero al comprobar con la identidad $var(\nabla Y_t=) \  2\gamma(0) - 2\gamma(1)$ no coinciden ya que esto da como resultado respectivamente $155.599 \neq 270.02$ esto se debe a heterocedasticidad estacional ya que la varianza cambia sustancialmente entre algunos meses pero no indica que exista tendencia debido a que si diferenciamos una vez mas la varianza aumenta.
