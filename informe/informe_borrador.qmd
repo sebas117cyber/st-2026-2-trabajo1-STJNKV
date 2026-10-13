@@ -849,3 +849,17 @@ tablaVar_s3 |>
 ```
 
 Se escoge la transformacion $\nabla_{12}$ debido a que es la que mas reduce la varianza y con el r1 en la mejor zona de aceptacion. Pero al comprobar con la identidad $var(\nabla Y_t=) \  2\gamma(0) - 2\gamma(1)$ no coinciden ya que esto da como resultado respectivamente $155.599 \neq 270.02$ esto se debe a heterocedasticidad estacional ya que la varianza cambia sustancialmente entre algunos meses pero no indica que exista tendencia debido a que si diferenciamos una vez mas la varianza aumenta.
+
+## item d
+
+![Anexo a mano punto 4.d](../figs/1.jpeg)
+
+![Anexo a mano punto 4.d](../figs/2.jpeg)
+
+![Anexo a mano punto 4.d](../figs/3.jpeg)
+
+![Anexo a mano punto 4.d](../figs/4.jpeg)
+
+![Anexo a mano punto 4.d](../figs/5.jpeg)
+
+![Anexo a mano punto 4.d](../figs/6.jpeg)
