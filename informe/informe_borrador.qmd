@@ -863,3 +863,44 @@ Se escoge la transformacion $\nabla_{12}$ debido a que es la que mas reduce la v
 ![Anexo a mano punto 4.d](../figs/5.jpeg)
 
 ![Anexo a mano punto 4.d](../figs/6.jpeg)
+
+
+
+# Punto 5
+
+## series resultantes
+
+```{r}
+# serie 1 rezagada (1-B)
+
+serie_1log <- serie_1 |> 
+  mutate(y = log(y))
+
+op_rezago_serie1 <- diferenciar(serie_1log$y, 1, 0)
+
+
+serie1_op <- serie_1log |> 
+  rename(valores = y) |> 
+  slice(1:(n()-1)) |> 
+  mutate(y = op_rezago_serie1)
+
+
+# serie 2 no se rezaga
+# se utiliza serie_2
+
+
+# serie 3 rezagada (1-B^12)
+op_Rs12_serie3 <- diferenciar(serie_3$y, 0, 1, 12)
+
+serie3_op <- serie_3 |> 
+  rename(valores = y) |> 
+  slice(1:(n()-12)) |> 
+  mutate(y = op_Rs12_serie3)
+
+```
+
+
+
+
+
+

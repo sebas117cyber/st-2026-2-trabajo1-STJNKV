@@ -1,33 +1,4 @@
-# esto es del d punto 1
 
-
-ljung_box <- function(r, T_obs, m, p = 0) {
-  
-  # r = (acf muestral, valores, errores), T_obs= total de observaciones
-  # m = periodo estacional p = parametros a ajustar si es sobre un modelo
-  
-  # Estadistico Qm
-  h     <- 1:m
-  Qm    <- T_obs * (T_obs + 2) * sum(r[h]^2 / (T_obs - h))
-  
-  # Grados de libertad
-  df    <- m - p
-  
-  # Valor critico al 5%
-  cv    <- qchisq(0.95, df) # pchisq= da un cuantil especifico de la chicuadrado con df grados de libertas
-  
-  # Valor p
-  pval  <- 1 - pchisq(Qm, df)
-  
-  #resultado como tabla
-  tibble::tibble(
-    estadistico  = round(Qm,   4),
-    df           = df,
-    valor_critico_5pct = round(cv, 4),
-    p_value      = pval,
-    rechazo_H0   = pval < 0.05
-  )
-}
 
 # prueba jarque 
 
@@ -102,4 +73,77 @@ durbin_watson <- function(e) {
       TRUE    ~ "Region de indecision"
     )
   )
+}
+
+
+
+optimizar <- function(y, metodo, rejilla) {
+  
+  # funsion MSE
+  calc_mse <- function(params) {
+    
+    # Extraer parametros segun metodo
+    res <- switch(metodo,
+                  
+                  "mm" = {
+                    k <- params[1]
+                    ajustar_mm(y, k)
+                  },
+                  
+                  "dmm" = {
+                    k <- params[1]
+                    ajustar_dmm(y, k)
+                  },
+                  
+                  "ses" = {
+                    alpha <- params[1]
+                    ajustar_ses(y, alpha)
+                  },
+                  
+                  "holt" = {
+                    alpha <- params[1]
+                    beta  <- params[2]
+                    ajustar_holt(y, alpha, beta)
+                  },
+                  
+                  stop("metodo no reconocido: use 'mm', 'dmm', 'ses' o 'holt'")
+    )
+    
+    # MSE: promedio de residuos^2 
+    residuos <- res$residuales
+    mean(residuos^2, na.rm = TRUE) #ignorando NA
+  }
+  
+  # Calcular MSE para cada fila de la rejilla
+  rejilla$mse <- apply(rejilla, 1, calc_mse)
+  
+  # Fila con menor MSE
+  optimo <- rejilla[which.min(rejilla$mse), ] # which.min = saca el indice donde esta el menor mse en rejilla
+  
+  list(
+    rejilla = rejilla,
+    optimo  = optimo
+  )
+}
+
+
+origen_movil <- function(datos, n_origenes) {  #datos = vector numerico
+  
+  n <- length(datos)
+  primer_origen <- n - n_origenes - 1
+  
+  resultados <- vector("list", n_origenes)
+  
+  for (i in seq_len(n_origenes)) {
+    
+    origen_actual <- primer_origen + i
+    
+    resultados[[i]] <- list(
+      origen      = origen_actual,
+      entrenamiento = datos[1:origen_actual],
+      prueba      = datos[origen_actual + 1]
+    )
+  }
+  
+  return(resultados)
 }

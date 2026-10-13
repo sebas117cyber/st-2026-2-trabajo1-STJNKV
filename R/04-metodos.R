@@ -570,57 +570,6 @@ ajustar_holt <- function(y, alpha, beta) {
 
 
 
-
-optimizar <- function(y, metodo, rejilla) {
-  
-  # funsion MSE
-  calc_mse <- function(params) {
-    
-    # Extraer parametros segun metodo
-    res <- switch(metodo,
-                  
-                  "mm" = {
-                    k <- params[1]
-                    ajustar_mm(y, k)
-                  },
-                  
-                  "dmm" = {
-                    k <- params[1]
-                    ajustar_dmm(y, k)
-                  },
-                  
-                  "ses" = {
-                    alpha <- params[1]
-                    ajustar_ses(y, alpha)
-                  },
-                  
-                  "holt" = {
-                    alpha <- params[1]
-                    beta  <- params[2]
-                    ajustar_holt(y, alpha, beta)
-                  },
-                  
-                  stop("metodo no reconocido: use 'mm', 'dmm', 'ses' o 'holt'")
-    )
-    
-    # MSE: promedio de residuos^2 
-    residuos <- res$residuales
-    mean(residuos^2, na.rm = TRUE) #ignorando NA
-  }
-  
-  # Calcular MSE para cada fila de la rejilla
-  rejilla$mse <- apply(rejilla, 1, calc_mse)
-  
-  # Fila con menor MSE
-  optimo <- rejilla[which.min(rejilla$mse), ] # which.min = saca el indice donde esta el menor mse en rejilla
-  
-  list(
-    rejilla = rejilla,
-    optimo  = optimo
-  )
-}
-
-
 # 
 # Grafico de mse vs alpha
 graficar_mse_1d <- function(resultado, nombre_param, titulo) {
