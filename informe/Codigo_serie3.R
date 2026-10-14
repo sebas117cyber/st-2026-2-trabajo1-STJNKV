@@ -189,40 +189,7 @@ op_Rs12_serie3 <- diferenciar(serie_3$y, 0, 1, 12)
 
 #---- coeficientes de polinomio ----
 
-# # estacionalidad 6
-# 
-# w_s3  <- op_Rs6_serie3
-# n_s3  <- length(w_s3)
-# w_cs3 <- w_s3 - mean(w_s3)        # centrar la serie
-# 
-# 
-# 
-# gamma0_s3 <- sum(w_cs3 * w_cs3) / n_s3
-# gamma1_s3 <- sum(w_cs3[1:(n_s3-1)] * w_cs3[2:n_s3]) / n_s3
-# gamma2_s3 <- sum(w_cs3[1:(n_s3-2)] * w_cs3[3:n_s3]) / n_s3
-# 
-# # sistema lineal series 3
-# 
-# Gamma_s3 <- matrix(c(gamma0_s3, gamma1_s3,
-#                      gamma1_s3, gamma0_s3), nrow = 2, byrow = TRUE)
-# g_s3 <- c(gamma1_s3, gamma2_s3)
-# 
-# # solucion del sistemas
-# coef_s3 <- solve(Gamma_s3, g_s3)
-# 
-# polinomio_rezago(coef_s3)
-# 
-# serie3_s6 <- serie_3 |> 
-#   rename(valores = y) |> 
-#   slice(1:(n()-7)) |> 
-#   mutate(y = op_Rs6_serie3)
-# 
-# graficar_serie(serie3_s6, "serie diferenciada s= 6")
-# 
-# 
-# graficar_raices(coef_s3)
 
-# estacionalidad 12
 
 op_Rs12_serie3 <- diferenciar(serie_3$y, 0, 1, 12)
 
@@ -234,9 +201,9 @@ w12_cs3 <- w12_s3 - mean(w12_s3)        # centrar la serie
 
 gamma0_s3_12 <- sum(w12_cs3 * w12_cs3) / n12_s3
 gamma1_s3_12 <- sum(w12_cs3[1:(n12_s3-12)] * w12_cs3[13:n12_s3]) / n12_s3 # gamma depende de s
-# gamma2_s3_12 <- sum(w12_cs3[1:(n12_s3-13)] * w12_cs3[14:n12_s3]) / n12_s3
+gamma2_s3_12 <- sum(w12_cs3[1:(n12_s3-13)] * w12_cs3[14:n12_s3]) / n12_s3
 
-# indentidad gamma1 / gamma0 = r1
+#----indentidad gamma1 / gamma0 = r1----
 
 r1_s3 <- gamma1_s3_12 / gamma0_s3_12
 r1_s3
@@ -247,37 +214,37 @@ var_s3
 
 var(op_Rs12_serie3)
 
-#----verificacion de tendencia----
-
-y3 <- serie_3$y
-t  <- seq_along(y3)
-
-
-mitad <- length(y3) %/% 2
-var_primera_mitad  <- sum((y3[1:mitad] - mean(y3[1:mitad]))^2) / mitad
-var_segunda_mitad  <- sum((y3[(mitad+1):length(y3)] - mean(y3[(mitad+1):length(y3)]))^2) / (length(y3)-mitad)
-
-cat("Varianza 1ra mitad:", var_primera_mitad, "\n")
-cat("Varianza 2da mitad:", var_segunda_mitad, "\n")
-
-
-n <- length(y3)
-media_y_t    <- mean(y3[13:n])
-media_y_t12  <- mean(y3[1:(n-12)])
-
-cat("Media y_t:", media_y_t, "\n")
-cat("Media y_(t-12):", media_y_t12, "\n")
-cat("Diferencia de medias:", media_y_t - media_y_t12, "\n")
-
-
-
-n  <- length(y3)
-mes <- rep(1:12, length.out = n)
-
-var_por_mes <- tapply(y3, mes, function(x) sum((x-mean(x))^2)/length(x))
-var_por_mes
-
-
+# #----verificacion de tendencia----
+# 
+# y3 <- serie_3$y
+# t  <- seq_along(y3)
+# 
+# 
+# mitad <- length(y3) %/% 2
+# var_primera_mitad  <- sum((y3[1:mitad] - mean(y3[1:mitad]))^2) / mitad
+# var_segunda_mitad  <- sum((y3[(mitad+1):length(y3)] - mean(y3[(mitad+1):length(y3)]))^2) / (length(y3)-mitad)
+# 
+# cat("Varianza 1ra mitad:", var_primera_mitad, "\n")
+# cat("Varianza 2da mitad:", var_segunda_mitad, "\n")
+# 
+# 
+# n <- length(y3)
+# media_y_t    <- mean(y3[13:n])
+# media_y_t12  <- mean(y3[1:(n-12)])
+# 
+# cat("Media y_t:", media_y_t, "\n")
+# cat("Media y_(t-12):", media_y_t12, "\n")
+# cat("Diferencia de medias:", media_y_t - media_y_t12, "\n")
+# 
+# 
+# 
+# n  <- length(y3)
+# mes <- rep(1:12, length.out = n)
+# 
+# var_por_mes <- tapply(y3, mes, function(x) sum((x-mean(x))^2)/length(x))
+# var_por_mes
+# 
+# 
 
 #----sistema lineal series 3----
 
@@ -311,24 +278,6 @@ ggsave(
 )
 
 
-# punto 5
+#----punto 5----
 
-graficar_serie(serie3_op, "serie 3 rezagada")
 
-y_s3 <- serie3_op$y
-
-n_s3 <- length(y_s3); m_s3 <- min(floor(n_s3/4), 24)
-
-r_s3 <- acf_manual(y_s3, m_s3)
-
-pacf_s3 <- pacf_dl(r_s3)
-
-pacf_R_s3 <- as.numeric(pacf(y_s3, lag.max = m_s3, plot = FALSE)$acf)
-
-diferencia_maxima_s3 <- max(abs(pacf_s3 - pacf_R_s3))
-
-diferencia_maxima_s3
-
-grafico_s3 <- graficar_bandas(r_s3, pacf_s3, n_s3, m_s3, "Serie 3")
-
-grafico_s3

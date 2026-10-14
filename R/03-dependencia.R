@@ -26,17 +26,11 @@ f_estacional <- function(x, pos, s, nivel = 0.05) {
 
 #-----------------ACF muestral ---------------------------#
 
-acf_muestral <- function(y, m) {
-  if (!is.numeric(y)) stop("y debe ser numérico")
-  if (anyNA(y)) stop("y no debe tener NA")
-  n <- length(y)
-  if (m >= n) stop("m debe ser menor que n")
-  yc  <- y - mean(y)
-  g0  <- sum(yc^2) / n
-  r   <- vapply(0:m, function(k) sum(yc[(k + 1):n] * yc[1:(n - k)]) / n / g0,
-                numeric(1))
-  names(r) <- 0:m
-  r
+acf_muestral_m <- function(y, m) {
+  n  <- length(y)
+  yc <- y - mean(y)
+  g0 <- sum(yc^2)
+  vapply(1:m, function(k) sum(yc[1:(n - k)] * yc[(1 + k):n]) / g0, numeric(1))
 }
 
 #------------------------Comparar semestre----------------------------#
@@ -119,10 +113,10 @@ ljung_box <- function(r, T_obs, m, p = 0) {
   )
 }
 
-# bandas
-banda_ruido_blanco <- function(n){
-  1.96 / sqrt(n)
-}
+#----bandas----
+# banda_ruido_blanco <- function(n){
+#   1.96 / sqrt(n)
+# }
 
 banda_bartlett <- function(r, n){
   m <- length(r)
@@ -134,33 +128,6 @@ banda_bartlett <- function(r, n){
   banda
 }
 
-graficar_bandas <- function(r, pacf_vals, n, m, titulo_extra = ""){
-  banda_rb   <- banda_ruido_blanco(n)
-  banda_bart <- banda_bartlett(r, n)
-  
-  datos_acf  <- tibble(rezago = 1:m, valor = r,         banda_bart = banda_bart)
-  datos_pacf <- tibble(rezago = 1:m, valor = pacf_vals, banda_bart = banda_bart)
-  
-  g_acf <- ggplot(datos_acf, aes(x = rezago, y = valor)) +
-    geom_segment(aes(xend = rezago, yend = 0)) +
-    geom_hline(yintercept = 0) +
-    geom_hline(yintercept =  banda_rb, linetype = "dashed", color = "blue", linewidth = 1) +
-    geom_hline(yintercept = -banda_rb, linetype = "dashed", color = "blue", linewidth = 1) +
-    geom_line(aes(y =  banda_bart), color = "red", linetype = "solid", linewidth = 1) +
-    geom_line(aes(y = -banda_bart), color = "red", linetype = "solid", linewidth = 1) +
-    labs(title = paste("ACF", titulo_extra), x = "Rezago", y = "ACF") +
-    theme_minimal()
-  
-  g_pacf <- ggplot(datos_pacf, aes(x = rezago, y = valor)) +
-    geom_segment(aes(xend = rezago, yend = 0)) +
-    geom_hline(yintercept = 0) +
-    geom_hline(yintercept =  banda_rb, linetype = "dashed", color = "blue", linewidth = 1) +
-    geom_hline(yintercept = -banda_rb, linetype = "dashed", color = "blue", linewidth = 1) +
-    labs(title = paste("PACF", titulo_extra), x = "Rezago", y = "PACF") +
-    theme_minimal()
-  
-  g_acf / g_pacf
-}
 
 #----------------varianza a largo-------------------#
 
@@ -185,20 +152,6 @@ varianza_largo_plazo <- function(y, L){
   gamma0 + 2*suma
 }
 
-
-
-acf_manual <- function(y, m){
-  n    <- length(y)
-  ybar <- mean(y)
-  denom <- sum((y - ybar)^2)
-  
-  r <- numeric(m)
-  for(h in 1:m){
-    num  <- sum((y[(h+1):n] - ybar) * (y[1:(n-h)] - ybar))
-    r[h] <- num / denom
-  }
-  r
-}
 
 
 

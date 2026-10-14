@@ -871,39 +871,258 @@ Se escoge la transformacion $\nabla_{12}$ debido a que es la que mas reduce la v
 ## series resultantes
 
 ```{r}
-# serie 1 rezagada (1-B)
+serie1_op <- serie_1 |>
+  slice(-1) |>
+  mutate(y = diferenciar(serie_1$y, 1, 0))
 
-op_rezago_serie1 <- diferenciar(serie_1$y, 1, 0)
+serie2_op <- serie_2
+
+serie3_op <- serie_3 |>
+  slice(-(1:12)) |>
+  mutate(y = diferenciar(serie_3$y, 0, 1, 12))
+```
+
+## A
+
+```{r, include=FALSE}
+correlograma_dl <- function(datos, m = NULL) {
+  y <- datos$y
+  n <- length(y)
+  if (is.null(m)) m <- min(floor(n / 4), 24)
+
+  r  <- acf_muestral_m(y, m)
+  p  <- pacf_dl(r)
+  bw <- 1.96 / sqrt(n)
+  bb <- banda_bartlett(r, n)
+  lags <- 1:m
+
+  base <- function(valor, titulo, ylab) {
+    ggplot2::ggplot(data.frame(rezago = lags, valor = valor),
+                    ggplot2::aes(rezago, valor)) +
+      ggplot2::geom_hline(yintercept = 0) +
+      ggplot2::geom_segment(ggplot2::aes(xend = rezago, yend = 0)) +
+      ggplot2::geom_hline(yintercept = c(-bw, bw), linetype = "dashed", colour = "blue") +
+      ggplot2::labs(title = titulo, x = "Rezago", y = ylab) +
+      ggplot2::theme_minimal()
+  }
+
+  g_acf <- base(r, "ACF muestral", "ACF") +
+    ggplot2::geom_line(data = data.frame(rezago = lags, b =  bb),
+                       ggplot2::aes(rezago, b), colour = "red", inherit.aes = FALSE) +
+    ggplot2::geom_line(data = data.frame(rezago = lags, b = -bb),
+                       ggplot2::aes(rezago, b), colour = "red", inherit.aes = FALSE)
+
+  g_pacf <- base(p, "PACF muestral", "PACF") +
+    ggplot2::labs(caption = paste0("n = ", n, ", m = ", m,
+      ". Azul: ±1,96/√n (ruido blanco). Rojo, solo en la ACF: banda de Bartlett."))
+
+  list(acf = r, pacf = p, panel = g_acf / g_pacf)
+}
+```
 
 
-serie1_op <- serie_1 |> 
-  rename(valores = y) |> 
-  slice(1:(n()-1)) |> 
-  mutate(y = op_rezago_serie1)
+```{r, echo=FALSE}
+crd1 <-correlograma_dl(serie1_op)$panel
+crd2 <-correlograma_dl(serie2_op)$panel
+crd3 <-correlograma_dl(serie3_op)$panel
+```
+
+```{r, echo=FALSE}
+crd1
+
+```
+
+```{r, echo=FALSE}
+crd2
+
+```
+
+```{r, echo=FALSE}
+crd3
+```
+
+```{r}
+resultados <- data.frame(
+  Serie = character(),
+  n = integer(),
+  m = integer(),
+  `Error máximo ACF` = numeric(),
+  `Error máximo PACF` = numeric(),
+  check.names = FALSE
+)
+
+for (nm in c("1", "2", "3")) {
+
+  w <- get(paste0("serie", nm, "_op"))$y
+  m <- min(floor(length(w) / 4), 24)
+
+  r_R <- acf(w, lag.max = m, plot = FALSE)$acf[-1]
+  p_R <- pacf(w, lag.max = m, plot = FALSE)$acf
+
+  error_acf  <- max(abs(acf_muestral_m(w, m) - r_R))
+  error_pacf <- max(abs(pacf_dl(r_R) - p_R))
+
+  resultados <- rbind(
+    resultados,
+    data.frame(
+      Serie = paste("Serie", nm),
+      n = length(w),
+      m = m,
+      `Error máximo ACF` = error_acf,
+      `Error máximo PACF` = error_pacf,
+      check.names = FALSE
+    )
+  )
+
+  stopifnot(error_pacf < 1e-10)
+}
+
+# Formatear los errores en notación científica
+resultados_kable <- resultados
+
+resultados_kable$`Error máximo ACF` <-
+  formatC(resultados$`Error máximo ACF`,
+          format = "e", digits = 3)
+
+resultados_kable$`Error máximo PACF` <-
+  formatC(resultados$`Error máximo PACF`,
+          format = "e", digits = 3)
+
+# Presentar la tabla
+knitr::kable(
+  resultados_kable,
+  caption = "Comparación de las funciones ACF y PACF",
+  align = "c",
+  booktabs = TRUE
+)
+
+remove(resultados)
+```
+
+```{r}
+resumen_bandas <- function(datos, m = 24) {
+  y <- datos$y; n <- length(y)
+  r <- acf_muestral_m(y, m); p <- pacf_dl(r)
+  bw <- 1.96 / sqrt(n); bb <- banda_bartlett(r, n)
+  list(acf_fuera_blanco   = which(abs(r) > bw),
+       acf_fuera_bartlett = which(abs(r) > bb),
+       pacf_fuera_blanco  = which(abs(p) > bw),
+       r1_a_r5 = round(r[1:5], 3), r12 = round(r[12], 3), r24 = round(r[24], 3))
+}
+resumen_bandas(serie1_op); resumen_bandas(serie2_op); resumen_bandas(serie3_op)
+```
+
+## B
+
+```{r, echo=FALSE}
+m <- 24
+
+r1 <- acf_muestral_m(serie1_op$y, m)
+r2 <- acf_muestral_m(serie2_op$y, m)
+r3 <- acf_muestral_m(serie3_op$y, m)
+
+lb1 <- ljung_box(r1, length(serie1_op$y), m)
+lb2 <- ljung_box(r2, length(serie2_op$y), m)
+lb3 <- ljung_box(r3, length(serie3_op$y), m)
+
+dplyr::bind_rows(serie1 = lb1, serie2 = lb2, serie3 = lb3, .id = "serie")
+```
+
+```{r, echo=FALSE}
+for (nm in c("1", "2", "3")) {
+  w  <- get(paste0("serie", nm, "_op"))$y
+  lb <- get(paste0("lb", nm))
+  dif <- abs(lb$estadistico - unname(Box.test(w, lag = m, type = "Ljung-Box")$statistic))
+  cat("Serie", nm, "| diferencia en Q =", formatC(dif, format = "e", digits = 2), "\n")
+  stopifnot(dif < 1e-3)
+}
+```
+
+```{r}
+reporte_lb <- function(y, m, nombre) {
+
+  n <- length(y)
+  r <- acf_muestral_m(y, m)
+  z <- ljung_box(r, n, m)
+
+  data.frame(
+    Serie = nombre,
+    n = n,
+    m = m,
+    `Estadístico Q` = z$estadistico,
+    `Grados de libertad` = z$df,
+    `Valor crítico (5%)` = z$valor_critico_5pct,
+    `Valor p` = z$p_value,
+    Decisión = if (z$rechazo_H0) {
+      "Rechazar H0"
+    } else {
+      "No rechazar H0"
+    },
+    check.names = FALSE
+  )
+}
+
+resultados_lb <- do.call(
+  rbind,
+  list(
+    reporte_lb(serie1_op$y, 24, "Serie 1 (∇y)"),
+    reporte_lb(serie2_op$y, 24, "Serie 2 (y)"),
+    reporte_lb(serie3_op$y, 24, "Serie 3 (∇₁₂y)")
+  )
+)
+
+knitr::kable(
+  resultados_lb,
+  digits = 4,
+  caption = "Resultados de la prueba de Ljung–Box con nivel de significancia del 5 \\%",
+  align = "c",
+  booktabs = TRUE
+)
+```
+
+**Prueba de Ljung–Box.** Para evaluar la presencia de autocorrelación conjunta hasta el rezago (m=24), se aplica la prueba de Ljung–Box a cada serie. Las hipótesis son:
+
+$$\begin{aligned}
+ H_0&:\rho_1=\rho_2= \cdots=\rho_m=0, \\
+ H_1&:\exists k\in\{1,\ldots,m\}\text{ tal que }\rho_k\neq 0. 
+\end{aligned}$$
 
 
-# serie 2 no se rezaga
-# se utiliza serie_2
+$$\begin{aligned}
+ H_0&:\rho_1=\rho_2=\cdots=\rho_m=0, \\
+ H_1&:\exists k\in\{1,\ldots,m\}\text{ tal que }\rho_k\neq 0. 
+\end{aligned}$$
 
 
-# serie 3 rezagada (1-B^12)
-op_Rs12_serie3 <- diferenciar(serie_3$y, 0, 1, 12)
+El estadístico de prueba es
+$$
+Q=n(n+2) \sum_{k=1}^{m} \frac{\hat{\rho}_{2k}}{n-k}
+$$
 
-serie3_op <- serie_3 |> 
-  rename(valores = y) |> 
-  slice(1:(n()-12)) |> 
-  mutate(y = op_Rs12_serie3)
+que, bajo la hipótesis nula y los supuestos correspondientes, se compara aproximadamente con una distribución $\chi^2_m$. Como no se estiman parámetros de un modelo sobre estas autocorrelaciones, no se realiza ningún ajuste adicional en los grados de libertad.
 
+Con un nivel de significancia del 5%, se rechaza $H_0$ cuando $Q > \chi^2_{0.95,m}$, equivalentemente, cuando el p-valor es menor que 0.05. Los resultados para las tres series se presentan en la tabla correspondiente.
+
+```{r, echo=FALSE}
+tab_lb <- do.call(rbind, lapply(c("1", "2", "3"), function(nm) {
+  w <- get(paste0("serie", nm, "_op"))$y
+  do.call(rbind, lapply(c(6, 12, 24), function(mm) {
+    z <- ljung_box(acf_muestral_m(w, mm), length(w), mm)
+    data.frame(serie = nm, m = mm, Q = z$estadistico, critico = z$valor_critico_5pct,
+               p = signif(z$p_value, 3), decision = ifelse(z$rechazo_H0, "Rechaza", "No rechaza"))
+  }))
+}))
+tab_lb
 ```
 
 
 
+## C
 
 
-### C
+```{r, echo=FALSE}
 
-
-```{r}
+# funsion para el punto c
 
 analisis_bloques <- function(y){
   n <- length(y)
@@ -969,27 +1188,182 @@ intervalos_media <- function(y){
 
 ```
 
-```{r}
-# asi se aplica el c a cada serie
+## bloques serie 1
 
 
+```{r, echo=FALSE}
 c_s1 <- list(bloques = analisis_bloques(serie1_op$y),
              intervalos = intervalos_media(serie1_op$y))
 
-c_s2 <- list(bloques = analisis_bloques(serie_2$y),
-             intervalos = intervalos_media(serie_2$y))
+graficar_bloques(c_s1$bloques, "Serie 1")
 
+```
+
+```{r, echo=FALSE}
+c_s1$bloques |> 
+  mutate(
+    media    = round(media, 4),
+    varianza = round(varianza, 4)
+  ) |> 
+  kable(
+    caption = "Serie 1: Media y varianza por bloque",
+    col.names = c("Bloque", "N° observaciones", "Media", "Varianza"),
+    align = "c"
+  ) |> 
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  )
+
+
+```
+
+
+```{r, echo=FALSE}
+tabla_intervalos_s1 <- tibble(
+  Metodo = c("Ingenuo (independencia)", "Largo plazo (Bartlett, L = %d)" |> sprintf(c_s1$intervalos$L)),
+  Error_estandar = c(c_s1$intervalos$ee_ingenuo, c_s1$intervalos$ee_largo_plazo),
+  Limite_inferior = c(c_s1$intervalos$ic_ingenuo["inf"], c_s1$intervalos$ic_largo_plazo["inf"]),
+  Media = rep(c_s1$intervalos$media, 2),
+  Limite_superior = c(c_s1$intervalos$ic_ingenuo["sup"], c_s1$intervalos$ic_largo_plazo["sup"])
+) |> 
+  mutate(across(where(is.numeric), ~ round(.x, 4)))
+
+tabla_intervalos_s1 |> 
+  kable(
+    caption = "Serie 1: Intervalos de confianza al 95\\% para la media",
+    col.names = c("Método", "Error estándar", "Límite inferior", "Media", "Límite superior"),
+    align = "c"
+  ) |> 
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  ) |> 
+  column_spec(4, bold = TRUE)
+
+```
+
+
+
+
+## bloques serie 2
+
+```{r, echo=FALSE}
+c_s2 <- list(bloques = analisis_bloques(serie2_op$y),
+             intervalos = intervalos_media(serie2_op$y))
+
+
+graficar_bloques(c_s2$bloques, "Serie 2")
+
+```
+
+
+```{r, echo=FALSE}
+c_s2$bloques |> 
+  mutate(
+    media    = round(media, 4),
+    varianza = round(varianza, 4)
+  ) |> 
+  kable(
+    caption = "Serie 2: Media y varianza por bloque",
+    col.names = c("Bloque", "N° observaciones", "Media", "Varianza"),
+    align = "c"
+  ) |> 
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  )
+
+
+```
+
+
+```{r, echo=FALSE}
+tabla_intervalos_s2 <- tibble(
+  Metodo = c("Ingenuo (independencia)", "Largo plazo (Bartlett, L = %d)" |> sprintf(c_s2$intervalos$L)),
+  Error_estandar = c(c_s2$intervalos$ee_ingenuo, c_s2$intervalos$ee_largo_plazo),
+  Limite_inferior = c(c_s2$intervalos$ic_ingenuo["inf"], c_s2$intervalos$ic_largo_plazo["inf"]),
+  Media = rep(c_s2$intervalos$media, 2),
+  Limite_superior = c(c_s2$intervalos$ic_ingenuo["sup"], c_s2$intervalos$ic_largo_plazo["sup"])
+) |> 
+  mutate(across(where(is.numeric), ~ round(.x, 4)))
+
+tabla_intervalos_s2 |> 
+  kable(
+    caption = "Serie 2: Intervalos de confianza al 95\\% para la media",
+    col.names = c("Método", "Error estándar", "Límite inferior", "Media", "Límite superior"),
+    align = "c"
+  ) |> 
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  ) |> 
+  column_spec(4, bold = TRUE)
+
+```
+
+
+
+
+## bloques serie 3
+
+```{r, echo=FALSE}
 c_s3 <- list(bloques = analisis_bloques(serie3_op$y),
              intervalos = intervalos_media(serie3_op$y))
 
 
-c_s1$bloques ; c_s1$intervalos
-c_s2$bloques ; c_s2$intervalos
-c_s3$bloques ; c_s3$intervalos
-
-graficar_bloques(c_s1$bloques, "Serie 1")
-graficar_bloques(c_s2$bloques, "Serie 2")
 graficar_bloques(c_s3$bloques, "Serie 3")
+
+```
+
+
+```{r, echo=FALSE}
+c_s3$bloques |> 
+  mutate(
+    media    = round(media, 4),
+    varianza = round(varianza, 4)
+  ) |> 
+  kable(
+    caption = "Serie 3: Media y varianza por bloque",
+    col.names = c("Bloque", "N° observaciones", "Media", "Varianza"),
+    align = "c"
+  ) |> 
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  )
+
+
+```
+
+
+```{r, echo=FALSE}
+tabla_intervalos_s3 <- tibble(
+  Metodo = c("Ingenuo (independencia)", "Largo plazo (Bartlett, L = %d)" |> sprintf(c_s3$intervalos$L)),
+  Error_estandar = c(c_s3$intervalos$ee_ingenuo, c_s3$intervalos$ee_largo_plazo),
+  Limite_inferior = c(c_s3$intervalos$ic_ingenuo["inf"], c_s3$intervalos$ic_largo_plazo["inf"]),
+  Media = rep(c_s3$intervalos$media, 2),
+  Limite_superior = c(c_s3$intervalos$ic_ingenuo["sup"], c_s3$intervalos$ic_largo_plazo["sup"])
+) |> 
+  mutate(across(where(is.numeric), ~ round(.x, 4)))
+
+tabla_intervalos_s3 |> 
+  kable(
+    caption = "Serie 3: Intervalos de confianza al 95\\% para la media",
+    col.names = c("Método", "Error estándar", "Límite inferior", "Media", "Límite superior"),
+    align = "c"
+  ) |> 
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"),
+    full_width = FALSE,
+    position = "center"
+  ) |> 
+  column_spec(4, bold = TRUE)
 
 ```
 
