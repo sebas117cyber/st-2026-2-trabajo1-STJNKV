@@ -873,13 +873,10 @@ Se escoge la transformacion $\nabla_{12}$ debido a que es la que mas reduce la v
 ```{r}
 # serie 1 rezagada (1-B)
 
-serie_1log <- serie_1 |> 
-  mutate(y = log(y))
-
-op_rezago_serie1 <- diferenciar(serie_1log$y, 1, 0)
+op_rezago_serie1 <- diferenciar(serie_1$y, 1, 0)
 
 
-serie1_op <- serie_1log |> 
+serie1_op <- serie_1 |> 
   rename(valores = y) |> 
   slice(1:(n()-1)) |> 
   mutate(y = op_rezago_serie1)
@@ -903,4 +900,96 @@ serie3_op <- serie_3 |>
 
 
 
+### C
+
+
+```{r}
+
+analisis_bloques <- function(y){
+  n <- length(y)
+  tam <- floor(n/4)
+  
+  bloques <- map(1:4, function(i){
+    inicio <- (i-1)*tam + 1
+    fin    <- if(i < 4) i*tam else n
+    y[inicio:fin]
+  })
+  
+  tibble(
+    bloque   = 1:4,
+    n_obs    = map_dbl(bloques, length),
+    media    = map_dbl(bloques, mean),
+    varianza = map_dbl(bloques, var)
+  )
+}
+
+graficar_bloques <- function(tabla_bloques, nombre_serie = ""){
+  g1 <- ggplot(tabla_bloques, aes(x = factor(bloque), y = media)) +
+    geom_col() +
+    labs(title = paste("Media por bloque", nombre_serie), x = "Bloque", y = "Media") +
+    theme_minimal()
+  
+  g2 <- ggplot(tabla_bloques, aes(x = factor(bloque), y = varianza)) +
+    geom_col() +
+    labs(title = paste("Varianza por bloque", nombre_serie), x = "Bloque", y = "Varianza") +
+    theme_minimal()
+  
+  g1 / g2
+}
+
+# la funcion de varianza_largo_plazo ya esta hecha
+
+intervalos_media <- function(y){
+  n    <- length(y)
+  ybar <- mean(y)
+  
+  # Error estándar "ingenuo" (supone independencia)
+  ee_ingenuo <- sqrt(var(y) / n)
+  
+  # Error estándar de largo plazo (dependencia serial, núcleo de Bartlett)
+  L       <- floor(4 * (n/100)^(2/9))
+  var_lp  <- varianza_largo_plazo(y, L)
+  ee_lp   <- sqrt(var_lp / n)
+  
+  z <- qnorm(0.975)
+  
+  list(
+    media         = ybar,
+    L             = L,
+    ee_ingenuo    = ee_ingenuo,
+    ee_largo_plazo = ee_lp,
+    ic_ingenuo    = c(inf = ybar - z*ee_ingenuo, sup = ybar + z*ee_ingenuo),
+    ic_largo_plazo = c(inf = ybar - z*ee_lp,     sup = ybar + z*ee_lp)
+  )
+}
+
+
+
+
+
+```
+
+```{r}
+# asi se aplica el c a cada serie
+
+
+c_s1 <- list(bloques = analisis_bloques(serie1_op$y),
+             intervalos = intervalos_media(serie1_op$y))
+
+c_s2 <- list(bloques = analisis_bloques(serie_2$y),
+             intervalos = intervalos_media(serie_2$y))
+
+c_s3 <- list(bloques = analisis_bloques(serie3_op$y),
+             intervalos = intervalos_media(serie3_op$y))
+
+
+c_s1$bloques ; c_s1$intervalos
+c_s2$bloques ; c_s2$intervalos
+c_s3$bloques ; c_s3$intervalos
+
+graficar_bloques(c_s1$bloques, "Serie 1")
+graficar_bloques(c_s2$bloques, "Serie 2")
+graficar_bloques(c_s3$bloques, "Serie 3")
+
+```
 

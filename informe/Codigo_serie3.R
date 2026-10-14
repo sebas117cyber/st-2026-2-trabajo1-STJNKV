@@ -249,25 +249,25 @@ var(op_Rs12_serie3)
 
 #----verificacion de tendencia----
 
-# y3 <- serie_3$y
-# t  <- seq_along(y3)
-# 
-# 
-# mitad <- length(y3) %/% 2
-# var_primera_mitad  <- sum((y3[1:mitad] - mean(y3[1:mitad]))^2) / mitad
-# var_segunda_mitad  <- sum((y3[(mitad+1):length(y3)] - mean(y3[(mitad+1):length(y3)]))^2) / (length(y3)-mitad)
-# 
-# cat("Varianza 1ra mitad:", var_primera_mitad, "\n")
-# cat("Varianza 2da mitad:", var_segunda_mitad, "\n")
-# 
-# 
-# n <- length(y3)
-# media_y_t    <- mean(y3[13:n])
-# media_y_t12  <- mean(y3[1:(n-12)])
-# 
-# cat("Media y_t:", media_y_t, "\n")
-# cat("Media y_(t-12):", media_y_t12, "\n")
-# cat("Diferencia de medias:", media_y_t - media_y_t12, "\n")
+y3 <- serie_3$y
+t  <- seq_along(y3)
+
+
+mitad <- length(y3) %/% 2
+var_primera_mitad  <- sum((y3[1:mitad] - mean(y3[1:mitad]))^2) / mitad
+var_segunda_mitad  <- sum((y3[(mitad+1):length(y3)] - mean(y3[(mitad+1):length(y3)]))^2) / (length(y3)-mitad)
+
+cat("Varianza 1ra mitad:", var_primera_mitad, "\n")
+cat("Varianza 2da mitad:", var_segunda_mitad, "\n")
+
+
+n <- length(y3)
+media_y_t    <- mean(y3[13:n])
+media_y_t12  <- mean(y3[1:(n-12)])
+
+cat("Media y_t:", media_y_t, "\n")
+cat("Media y_(t-12):", media_y_t12, "\n")
+cat("Diferencia de medias:", media_y_t - media_y_t12, "\n")
 
 
 
@@ -311,6 +311,24 @@ ggsave(
 )
 
 
+# punto 5
 
-# ---- tabla de varianza serie 3 ----
+graficar_serie(serie3_op, "serie 3 rezagada")
 
+y_s3 <- serie3_op$y
+
+n_s3 <- length(y_s3); m_s3 <- min(floor(n_s3/4), 24)
+
+r_s3 <- acf_manual(y_s3, m_s3)
+
+pacf_s3 <- pacf_dl(r_s3)
+
+pacf_R_s3 <- as.numeric(pacf(y_s3, lag.max = m_s3, plot = FALSE)$acf)
+
+diferencia_maxima_s3 <- max(abs(pacf_s3 - pacf_R_s3))
+
+diferencia_maxima_s3
+
+grafico_s3 <- graficar_bandas(r_s3, pacf_s3, n_s3, m_s3, "Serie 3")
+
+grafico_s3

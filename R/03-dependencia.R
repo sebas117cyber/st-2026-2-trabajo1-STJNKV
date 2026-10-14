@@ -144,18 +144,18 @@ graficar_bandas <- function(r, pacf_vals, n, m, titulo_extra = ""){
   g_acf <- ggplot(datos_acf, aes(x = rezago, y = valor)) +
     geom_segment(aes(xend = rezago, yend = 0)) +
     geom_hline(yintercept = 0) +
-    geom_hline(yintercept =  banda_rb, linetype = "dashed", color = "blue") +
-    geom_hline(yintercept = -banda_rb, linetype = "dashed", color = "blue") +
-    geom_line(aes(y =  banda_bart), color = "red", linetype = "dotted") +
-    geom_line(aes(y = -banda_bart), color = "red", linetype = "dotted") +
+    geom_hline(yintercept =  banda_rb, linetype = "dashed", color = "blue", linewidth = 1) +
+    geom_hline(yintercept = -banda_rb, linetype = "dashed", color = "blue", linewidth = 1) +
+    geom_line(aes(y =  banda_bart), color = "red", linetype = "solid", linewidth = 1) +
+    geom_line(aes(y = -banda_bart), color = "red", linetype = "solid", linewidth = 1) +
     labs(title = paste("ACF", titulo_extra), x = "Rezago", y = "ACF") +
     theme_minimal()
   
   g_pacf <- ggplot(datos_pacf, aes(x = rezago, y = valor)) +
     geom_segment(aes(xend = rezago, yend = 0)) +
     geom_hline(yintercept = 0) +
-    geom_hline(yintercept =  banda_rb, linetype = "dashed", color = "blue") +
-    geom_hline(yintercept = -banda_rb, linetype = "dashed", color = "blue") +
+    geom_hline(yintercept =  banda_rb, linetype = "dashed", color = "blue", linewidth = 1) +
+    geom_hline(yintercept = -banda_rb, linetype = "dashed", color = "blue", linewidth = 1) +
     labs(title = paste("PACF", titulo_extra), x = "Rezago", y = "PACF") +
     theme_minimal()
   
@@ -184,3 +184,21 @@ varianza_largo_plazo <- function(y, L){
   
   gamma0 + 2*suma
 }
+
+
+
+acf_manual <- function(y, m){
+  n    <- length(y)
+  ybar <- mean(y)
+  denom <- sum((y - ybar)^2)
+  
+  r <- numeric(m)
+  for(h in 1:m){
+    num  <- sum((y[(h+1):n] - ybar) * (y[1:(n-h)] - ybar))
+    r[h] <- num / denom
+  }
+  r
+}
+
+
+
