@@ -122,7 +122,7 @@ tabla_transformaciones <- function(y, transformaciones) {
 
 ```{r, echo=FALSE}
 
-ficha_st1 <- crear_ficha(serie_1, "consumo mensual de agua potable 2011-2025", "m³")
+ficha_st1 <- crear_ficha(serie_1, "consumo mensual de agua potable 2011-2025", " miles de m³")
 
 tabla_ficha1 <- kable(ficha_st1, booktabs = TRUE, align = c("l", "l"),
       caption = "Ficha técnica - Serie 1") |>
@@ -178,7 +178,7 @@ tabla_ficha3
 
 **serie 1**
 
-**pregunta serie 1** ¿El consumo mensual de agua potable en miles de m³ de la ciudad Villa Clara superara la capacidad de su acueducto de potavilizar 650 mil m³ al mes para planificar una ampliacion en un horizonte de 18 a 24 meses?
+**pregunta serie 1** ¿El consumo mensual de agua potable en miles de m³ de la ciudad Villa Clara superara la capacidad de su acueducto de potavilizar 650 mil m³ al mes para planificar una ampliacion en un horizonte de 12 meses?
 
 **serie 2**
 
@@ -244,7 +244,7 @@ fuente_2     <- attr(serie_2, "fuente")
 
 # Regla de partición (ajustar según lo pedido en el enunciado)
 n0_2 <- floor(0.8 * T_2)          # 80% entrenamiento
-H_2  <- frecuencia_2              # horizonte en la frecuencia de la serie
+H_2  <- 7              # horizonte en la frecuencia de la serie
 
 origenes_h1_2 <- T_2 - n0_2
 origenes_H_2  <- T_2 - n0_2 - H_2 + 1
@@ -313,8 +313,6 @@ tabla_Rs3 <- kable(tabla_serie3, booktabs = TRUE, align = "c",
   row_spec(nrow(tabla_serie3), extra_latex_after = "\\bottomrule")
 
 ```
-
-
 
 
 ```{r, echo=FALSE}
