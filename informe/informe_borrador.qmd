@@ -870,7 +870,7 @@ Se escoge la transformacion $\nabla_{12}$ debido a que es la que mas reduce la v
 
 ## series resultantes
 
-```{r}
+```{r, echo=FALSE}
 serie1_op <- serie_1 |>
   slice(-1) |>
   mutate(y = diferenciar(serie_1$y, 1, 0))
@@ -941,7 +941,7 @@ crd2
 crd3
 ```
 
-```{r}
+```{r, echo=FALSE}
 resultados <- data.frame(
   Serie = character(),
   n = integer(),
@@ -999,7 +999,7 @@ knitr::kable(
 remove(resultados)
 ```
 
-```{r}
+```{r, echo=FALSE}
 resumen_bandas <- function(datos, m = 24) {
   y <- datos$y; n <- length(y)
   r <- acf_muestral_m(y, m); p <- pacf_dl(r)
@@ -1038,7 +1038,7 @@ for (nm in c("1", "2", "3")) {
 }
 ```
 
-```{r}
+```{r, echo=FALSE}
 reporte_lb <- function(y, m, nombre) {
 
   n <- length(y)

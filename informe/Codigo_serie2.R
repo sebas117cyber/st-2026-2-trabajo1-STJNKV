@@ -4,6 +4,7 @@ source("R/00-lectura.R")
 source("R/01-graficos.R")
 source("R/02-operadores.R")
 source("R/03-dependencia.R")
+source("R/04-metodos.R")
 
 serie_2 <- leer_serie("datos/STJNKV-serie-2.csv", "estación de monitoreo del centro de Villa Clara", 
                       "µg/m³")
@@ -175,4 +176,9 @@ ggsave(
   height = 5,
   dpi = 300
 )
+
+
+#----pronostico----
+
+# opciones
 

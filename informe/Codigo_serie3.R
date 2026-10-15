@@ -212,39 +212,39 @@ var_s3 <- 2*gamma0_s3_12 - 2 * gamma1_s3_12
 
 var_s3
 
-var(op_Rs12_serie3)
+var(serie_3$y)
 
 # #----verificacion de tendencia----
-# 
-# y3 <- serie_3$y
-# t  <- seq_along(y3)
-# 
-# 
-# mitad <- length(y3) %/% 2
-# var_primera_mitad  <- sum((y3[1:mitad] - mean(y3[1:mitad]))^2) / mitad
-# var_segunda_mitad  <- sum((y3[(mitad+1):length(y3)] - mean(y3[(mitad+1):length(y3)]))^2) / (length(y3)-mitad)
-# 
-# cat("Varianza 1ra mitad:", var_primera_mitad, "\n")
-# cat("Varianza 2da mitad:", var_segunda_mitad, "\n")
-# 
-# 
-# n <- length(y3)
-# media_y_t    <- mean(y3[13:n])
-# media_y_t12  <- mean(y3[1:(n-12)])
-# 
-# cat("Media y_t:", media_y_t, "\n")
-# cat("Media y_(t-12):", media_y_t12, "\n")
-# cat("Diferencia de medias:", media_y_t - media_y_t12, "\n")
-# 
-# 
-# 
-# n  <- length(y3)
-# mes <- rep(1:12, length.out = n)
-# 
-# var_por_mes <- tapply(y3, mes, function(x) sum((x-mean(x))^2)/length(x))
-# var_por_mes
-# 
-# 
+
+y3 <- serie_3$y
+t  <- seq_along(y3)
+
+
+mitad <- length(y3) %/% 2
+var_primera_mitad  <- sum((y3[1:mitad] - mean(y3[1:mitad]))^2) / mitad
+var_segunda_mitad  <- sum((y3[(mitad+1):length(y3)] - mean(y3[(mitad+1):length(y3)]))^2) / (length(y3)-mitad)
+
+cat("Varianza 1ra mitad:", var_primera_mitad, "\n")
+cat("Varianza 2da mitad:", var_segunda_mitad, "\n")
+
+
+n <- length(y3)
+media_y_t    <- mean(y3[13:n])
+media_y_t12  <- mean(y3[1:(n-12)])
+
+cat("Media y_t:", media_y_t, "\n")
+cat("Media y_(t-12):", media_y_t12, "\n")
+cat("Diferencia de medias:", media_y_t - media_y_t12, "\n")
+
+
+
+n  <- length(y3)
+mes <- rep(1:12, length.out = n)
+
+var_por_mes <- tapply(y3, mes, function(x) sum((x-mean(x))^2)/length(x))
+var_por_mes
+
+
 
 #----sistema lineal series 3----
 

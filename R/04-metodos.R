@@ -12,11 +12,53 @@ library(patchwork)
 # y = datos(serie ts)
 
 
-# 1 media simple 
+# ingenuo estacional
+
+
+# 1b. Ingenuo (random walk) -> Yhat_{t+1} = Y_t
+ajustar_ingenuo <- function(y) {
+  
+  # Validaciones
+  stopifnot(!anyNA(y), is.numeric(y), length(y) >= 2)
+  
+  T_obs <- length(y)
+  
+  fitted <- y
+  
+  # Residuos: y_t - fitted_{t-1} = y_t - y_{t-1}
+  residuo <- numeric(T_obs)
+  residuo[1] <- 0  
+  for (t in 2:T_obs) {
+    residuo[t] <- y[t] - fitted[t - 1]
+  }
+  
+  
+  yhat <- c(NA, fitted[-T_obs])   # yhat[t] = fitted[t-1] = y[t-1]
+  
+  
+  ultimo_valor <- fitted[T_obs]
+  pronosticar <- function(h) {
+    stopifnot(is.numeric(h), length(h) == 1, h >= 1)
+    rep(ultimo_valor, h)
+  }
+  
+  resul_ingenuo <- list(
+    metodo         = "Ingenuo",
+    yhat           = yhat,
+    pronosticar    = pronosticar,
+    parametros     = list(ultimo_valor = ultimo_valor),
+    Ajustados      = fitted,
+    residuales     = residuo,
+    Extra_muestral = ultimo_valor,
+    T_observado    = T_obs
+  )
+  
+  return(resul_ingenuo)
+}
 
 
 # 1 media simple
-ajusta_media <- function(y) {
+ajustar_media <- function(y) {
   
   # Validaciones
   stopifnot(!anyNA(y), is.numeric(y), length(y) >= 2)
@@ -77,7 +119,7 @@ ajustar_mm <- function(y, k) {
   
   T_obs <- length(y)
   
-  if (k <= 2) stop("k debe ser mayor a 2")
+  if (k <= 1) stop("k debe ser mayor a 2")
   
   # valores ajustados y residuos
   fitted   <- rep(NA, T_obs) # rep(NA, )hace que se rellenen los faltantes con NA
@@ -137,35 +179,36 @@ ajustar_ses <- function(y, alpha) {
   fitted    <- numeric(T_obs)
   residuals <- numeric(T_obs)
   
-  # Calentamiento: Yhat_2 = Y_1
+  # Calentamiento: fitted[1] = Yhat_2 = Y_1
   fitted[1]    <- y[1]
   residuals[1] <- 0
   
-  # Correccion de error: Yhat_{t+1} = Yhat_t + alpha * e_t
+  # Correccion de error: fitted[t] = Yhat_{t+1} = Yhat_t + alpha * e_t
   for (t in 2:T_obs) {
-    e_t           <- y[t] - fitted[t - 1]        # error en t
-    fitted[t]     <- fitted[t - 1] + alpha * e_t # correccion de error
+    e_t           <- y[t] - fitted[t - 1]        # error en t (Y_t - Yhat_t)
+    fitted[t]     <- fitted[t - 1] + alpha * e_t # correccion de error -> Yhat_{t+1}
     residuals[t]  <- e_t
   }
   
-  # Verificacion: Promedio ponderado (debe ser identico)
+  # Verificacion: Promedio ponderado (debe ser identico a 'fitted')
+  # CORREGIDO: se usa y[t] (no y[t-1]) para eliminar el desfase de indice
   fitted_pp    <- numeric(T_obs)
   fitted_pp[1] <- y[1]
   
   for (t in 2:T_obs) {
-    fitted_pp[t] <- alpha * y[t - 1] + (1 - alpha) * fitted_pp[t - 1]
+    fitted_pp[t] <- alpha * y[t] + (1 - alpha) * fitted_pp[t - 1]
   }
   
   # Comprobacion numerica de que ambas formas coinciden
   coinciden <- all(abs(fitted - fitted_pp) < 1e-10)
   
-  # Pronostico extramuestral: alpha*Y_T + (1-alpha)*Yhat_T
-  forecast_value <- alpha * y[T_obs] + (1 - alpha) * fitted[T_obs]
+  # CORREGIDO: fitted[T_obs] ya es Yhat_{T_obs+1}; no se vuelve a aplicar la correccion
+  forecast_value <- fitted[T_obs]
   
   diferencia <- mean(fitted) - mean(fitted_pp)
   
   # yhat: pronostico de Y_t hecho con info hasta t-1; calentamiento = NA
-  yhat <- c(NA, fitted[-T_obs])                  # yhat[t] = fitted[t-1]
+  yhat <- c(NA, fitted[-T_obs])                  # yhat[t] = fitted[t-1] = Yhat_t
   
   # pronosticar: devuelve vector de h pronosticos extramuestrales
   pronosticar <- function(h) {
@@ -176,9 +219,9 @@ ajustar_ses <- function(y, alpha) {
   # Resultado
   Resultado_SES <- list(
     metodo              = paste("SES alpha =", alpha),
-    yhat                = yhat,                   # nuevo
-    pronosticar         = pronosticar,            # nuevo
-    parametros          = list(alpha = alpha,     # nuevo
+    yhat                = yhat,
+    pronosticar         = pronosticar,
+    parametros          = list(alpha = alpha,
                                nivel_final = fitted[T_obs]),
     alpha               = alpha,
     Ajustados           = fitted,
@@ -204,34 +247,38 @@ ajustar_dmm <- function(y, k) {
   
   T_obs <- length(y)
   
-  if (k <= 2) stop("k debe ser mayor a 2")
+  # CORREGIDO: se permite k = 2 (antes bloqueaba con k <= 2)
+  if (k <= 1) stop("k debe ser mayor o igual a 2")
   
   MM    <- rep(NA, T_obs)   # media movil simple
   DMM   <- rep(NA, T_obs)   # doble media movil
   E_hat <- rep(NA, T_obs)   # nivel estimado
   b_hat <- rep(NA, T_obs)   # pendiente estimada
-  fitted   <- rep(NA, T_obs) # hace que se rellenen los faltantes con NA
+  fitted   <- rep(NA, T_obs)
   residuos <- rep(NA, T_obs)
   
-  # ciclo para calcular las MM
-  for (t in (2*k - 1):T_obs) {
+  # CORREGIDO: un solo recorrido.
+  # MM se calcula desde t = k (antes solo desde 2k-1, dejando NA ocultos
+  # que usaba DMM). DMM/E_hat/b_hat desde t = 2k-1, y el primer pronostico
+  # (fitted) queda en t = 2k, es decir Yhat_{2k}.
+  for (t in k:T_obs) {
     
-    MM[t]  <- mean(y[(t - k + 1):t])
-    # media movil de la media movil
-    DMM[t] <- mean(MM[(t - k + 1):t])
-    # trayectorias y pendiente
-    E_hat[t] <- 2 * MM[t] - DMM[t]
-    b_hat[t] <- (2 / (k - 1)) * (MM[t] - DMM[t])
+    MM[t] <- mean(y[(t - k + 1):t])
     
-    # pronostico h=1
-    if (t > 2*k - 1) {
-      fitted[t]   <- E_hat[t - 1] + b_hat[t - 1] * 1
-      residuos[t] <- y[t] - fitted[t]
+    if (t >= 2*k - 1) {
+      DMM[t]   <- mean(MM[(t - k + 1):t])
+      E_hat[t] <- 2 * MM[t] - DMM[t]
+      b_hat[t] <- (2 / (k - 1)) * (MM[t] - DMM[t])
+      
+      if (t > 2*k - 1) {
+        fitted[t]   <- E_hat[t - 1] + b_hat[t - 1] * 1
+        residuos[t] <- y[t] - fitted[t]
+      }
     }
   }
   
   # yhat: pronostico de Y_t hecho con info hasta t-1; calentamiento = NA
-  yhat <- fitted                                  # ya tiene NA en calentamiento
+  yhat <- fitted
   
   # Pronostico extramuestral
   forecast_fn <- function(h) E_hat[T_obs] + b_hat[T_obs] * h
@@ -239,21 +286,21 @@ ajustar_dmm <- function(y, k) {
   # pronosticar: devuelve vector de h pronosticos extramuestrales
   pronosticar <- function(h) {
     stopifnot(is.numeric(h), length(h) == 1, h >= 1)
-    forecast_fn(1:h)                              # vector Y_{T+1},...,Y_{T+h}
+    forecast_fn(1:h)
   }
   
   list(
     metodo      = paste("Doble media movil k =", k),
-    yhat        = yhat,                           
-    pronosticar = pronosticar,                    
-    parametros  = list(k      = k,                
+    yhat        = yhat,
+    pronosticar = pronosticar,
+    parametros  = list(k      = k,
                        E_final = E_hat[T_obs],
                        b_final = b_hat[T_obs]),
     k           = k,
-    MM          = MM,       # trayectoria MM_t(k)
-    DMM         = DMM,      # trayectoria DMM_t(k)
-    E_hat       = E_hat,    # trayectoria nivel
-    b_hat       = b_hat,    # trayectoria pendiente
+    MM          = MM,
+    DMM         = DMM,
+    E_hat       = E_hat,
+    b_hat       = b_hat,
     Ajustados   = fitted,
     residuales  = residuos,
     Extra_muestral = forecast_fn,
@@ -483,13 +530,12 @@ ajustar_holt <- function(y, alpha, beta) {
   # Vectores para trayectorias
   L      <- numeric(T_obs)   # nivel
   Tend   <- numeric(T_obs)   # pendiente (T_hat)
-  fitted <- numeric(T_obs)   # Yhat_t
+  fitted <- numeric(T_obs)   # fitted[t] = Yhat_t (pronostico a un paso para t)
   
-  # Ecuaciones estandar
   # Calentamiento
   L[1]      <- y[1]
   Tend[1]   <- 0
-  fitted[1] <- y[1]   # Yhat_1 = Y_1 (sin pronostico real)
+  fitted[1] <- y[1]   # inicializacion, no es un pronostico real
   
   for (t in 2:T_obs) {
     Yhat_t    <- L[t-1] + Tend[t-1]                          # pronostico para t
@@ -500,7 +546,7 @@ ajustar_holt <- function(y, alpha, beta) {
   
   residuals <- y - fitted
   
-  # Correccion de error 
+  # Correccion de error
   L2    <- numeric(T_obs)
   Tend2 <- numeric(T_obs)
   
@@ -508,9 +554,9 @@ ajustar_holt <- function(y, alpha, beta) {
   Tend2[1] <- 0
   
   for (t in 2:T_obs) {
-    e_t      <- y[t] - (L2[t-1] + Tend2[t-1])               # error
-    L2[t]    <- L2[t-1] + Tend2[t-1] + alpha * e_t           # nivel corregido
-    Tend2[t] <- Tend2[t-1] + alpha * beta * e_t              # pendiente corregida
+    e_t      <- y[t] - (L2[t-1] + Tend2[t-1])
+    L2[t]    <- L2[t-1] + Tend2[t-1] + alpha * e_t
+    Tend2[t] <- Tend2[t-1] + alpha * beta * e_t
   }
   
   # Verificacion numerica: ambas formas deben coincidir
@@ -520,27 +566,29 @@ ajustar_holt <- function(y, alpha, beta) {
   # Pronostico extramuestral: Y_{T+h} = L_T + T_T * h
   forecast_fn <- function(h) L[T_obs] + Tend[T_obs] * h
   
-  # yhat: pronostico de Y_t hecho con info hasta t-1; calentamiento = NA
-  yhat <- c(NA, fitted[-T_obs])                  # yhat[t] = fitted[t-1]
+  # CORREGIDO: fitted[t] ya es Yhat_t (pronostico con info hasta t-1);
+  # yhat es 'fitted' con NA solo en t=1 (inicializacion), sin desfase adicional.
+  yhat <- fitted
+  yhat[1] <- NA
   
   # pronosticar: devuelve vector de h pronosticos extramuestrales
   pronosticar <- function(h) {
     stopifnot(is.numeric(h), length(h) == 1, h >= 1)
-    forecast_fn(1:h)                              # vector Y_{T+1},...,Y_{T+h}
+    forecast_fn(1:h)
   }
   
   list(
     metodo          = paste("parametros alpha =", alpha, "beta =", beta),
-    yhat            = yhat,                        
-    pronosticar     = pronosticar,                
-    parametros      = list(alpha   = alpha,       
+    yhat            = yhat,
+    pronosticar     = pronosticar,
+    parametros      = list(alpha   = alpha,
                            beta    = beta,
                            L_final = L[T_obs],
                            T_final = Tend[T_obs]),
     alpha           = alpha,
     beta            = beta,
-    L               = L,          # trayectoria nivel
-    Tend            = Tend,        # trayectoria pendiente
+    L               = L,
+    Tend            = Tend,
     ajustados       = fitted,
     residuales      = residuals,
     Extra_muestral  = forecast_fn,
