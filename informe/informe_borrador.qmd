@@ -36,7 +36,9 @@ source("../R/05-evaluacion.R")
 
 
 ```
+
 # 1
+
 # Punto 2
 
 ```{r, include=FALSE}
@@ -1125,8 +1127,7 @@ $$\begin{aligned}
  H_1&:\exists k\in\{1,\ldots,m\}\text{ tal que }\rho_k\neq 0. 
 \end{aligned}$$
 
-El estadístico de prueba es
-$$Q=n(n+2) \sum_{k=1}^{m} \frac{\hat{\rho}_{2k}}{n-k}$$
+El estadístico de prueba es $$Q=n(n+2) \sum_{k=1}^{m} \frac{\hat{\rho}_{2k}}{n-k}$$
 
 que, bajo la hipótesis nula y los supuestos correspondientes, se compara aproximadamente con una distribución $\chi^2_m$. Como no se estiman parámetros de un modelo sobre estas autocorrelaciones, no se realiza ningún ajuste adicional en los grados de libertad.
 
@@ -1143,6 +1144,13 @@ tab_lb <- do.call(rbind, lapply(c("1", "2", "3"), function(nm) {
 }))
 tab_lb
 ```
+
+- **Serie 1:** Se obtiene $Q = 39.56 > 36.415$, con $p = 0.0238$; por tanto, se rechaza la hipótesis nula $H_0$ de ausencia de autocorrelación. La ACF presenta una autocorrelación significativa únicamente en el rezago 1 $r_1 = -0.297$, mientras que en los rezagos 12 y 24 los valores son cercanos a cero $r_{12} = -0.035$ y $r_{24} = -0.016$. La PACF presenta valores negativos que disminuyen en magnitud durante los primeros cuatro rezagos. En palabras sencillas, los cambios de un período tienden a relacionarse de manera inversa con los del período inmediatamente anterior, pero esta relación pierde importancia en los períodos siguientes. No se observan señales claras de un comportamiento que se repita cada 12 o 24 períodos. En conclusión, la serie presenta cierta dependencia entre sus observaciones y no se comporta como una serie completamente aleatoria.
+
+- **Serie 2:** Se obtiene $Q = 136.1$, con un valor $p$ prácticamente igual a cero; por tanto, se rechaza la hipótesis nula $H_0$ de ausencia de autocorrelación. La ACF muestra una disminución progresiva de las autocorrelaciones $r_1 = 0.609$ y $r_2 = 0.212$, mientras que la PACF presenta valores importantes en los dos primeros rezagos y posteriormente pierde significancia. Esto indica que las observaciones están relacionadas con los valores anteriores, especialmente con los más recientes. En palabras sencillas, el comportamiento actual de la serie depende en parte de lo que ocurrió en los períodos previos, por lo que sus valores no varían de manera completamente independiente. En conclusión, existe una dependencia temporal importante y la serie no se comporta como ruido blanco.
+
+- **Serie 3:** Se obtiene $Q = 51.62$, con $p = 0.0009$; por tanto, se rechaza la hipótesis nula $H_0$ de ausencia de autocorrelación. Al considerar $m = 6$, no se rechaza esta hipótesis $p = 0.068$; sin embargo, al ampliar el análisis a $m = 12$ $p = 0.003$ y $m = 24$, sí se rechaza. La ACF presenta autocorrelaciones destacadas en el rezago 3 $r_3 = 0.255$ y en los rezagos 12 y 24 $r_{12} = -0.258$ y $r_{24} = -0.189$. Por su parte, la PACF presenta valores significativos en los rezagos 3, 11, 12, 21 y 24. En palabras sencillas, algunos valores de la serie están relacionados con observaciones anteriores y existen indicios de un comportamiento que podría repetirse cada 12 períodos. Las autocorrelaciones negativas en los rezagos 12 y 24 indican que las observaciones separadas por esos intervalos tienden a variar en sentidos opuestos. En conclusión, la serie presenta dependencia temporal y posibles patrones estacionales que deben estudiarse con mayor detalle.
+
 
 ## C
 
@@ -1269,6 +1277,8 @@ tabla_intervalos_s1 |>
 
 ```
 
+**Serie 1:** La varianza es aproximadamente estable, pero la media por bloques aumenta de 0.35 a 2.27, lo que indica que el crecimiento del consumo se acelera, en concordancia con la tendencia cuadrática identificada en el punto 6. Por tanto, la serie diferenciada es solo aproximadamente estacionaria, pues su media no es constante. Como \(r_1 < 0\), el error estándar de Bartlett (0.294) es menor que el ingenuo (0.449), por lo que este último sobreestima la incertidumbre. Finalmente, la media de 1.196 representa un aumento promedio mensual de aproximadamente 1.2 miles de m³, equivalente a cerca de 14 miles de m³ al año, aunque este incremento varía a lo largo del tiempo.
+
 ## bloques serie 2
 
 ```{r, echo=FALSE}
@@ -1324,6 +1334,8 @@ tabla_intervalos_s2 |>
   column_spec(4, bold = TRUE)
 
 ```
+
+**Serie 2:** Las medias y varianzas se mantienen estables, por lo que la serie es plausiblemente estacionaria. Como $r_1 > 0$, el error estándar de Bartlett es mayor que el ingenuo (0.352 frente a 0.239), lo que indica que este último subestima la incertidumbre en un factor de aproximadamente 1.5; por tanto, el método de Bartlett es el más adecuado. La media de $34.72\ \mu g/m^3$ representa el nivel promedio de PM2.5, y su límite superior de confianza (35.41) se encuentra por debajo del umbral de 37. En consecuencia, en promedio no se supera dicho umbral, aunque pueden presentarse días en los que sí se exceda.
 
 ## bloques serie 3
 
@@ -1381,13 +1393,13 @@ tabla_intervalos_s3 |>
 
 ```
 
+**Serie 3:** La media de $\nabla_{12}$ y es 1.055 y ambos intervalos de confianza contienen el cero. Por tanto, no hay evidencia suficiente para afirmar que el caudal de un mes difiera del registrado en el mismo mes del año anterior, ni de que exista una tendencia residual anual. Los errores estándar de ambos métodos son similares, debido a que las autocorrelaciones son pequeñas o se compensan entre sí. Finalmente, la varianza aumenta ligeramente entre bloques (de 127 a 187), aunque no se observa un patrón marcado.
+
 # Punto 6
 
-##Verificacion de los metodos
+## Verificacion de los metodos
 
-```{r, echo=FALSE}
-# Bloque de verificacion de 04-metodos.R (aqui SI se permite lm())
-# Ejecutar desde la raiz del repositorio: source("R/04-metodos.R")
+```{r}
 ok <- function(a, b) isTRUE(all.equal(a, b))
 
 stopifnot(
@@ -1414,7 +1426,8 @@ stopifnot(
      c(35, 38))
 )
 
-# Tendencias contra lm() (unico lugar donde lm() esta permitido)
+# Tendencias contra lm() 
+
 set.seed(1)
 yy <- 5 + 0.3 * (1:40) + 0.01 * (1:40)^2 + rnorm(40)
 tt <- 1:40
@@ -1431,7 +1444,7 @@ y_mod  <- y_test; y_mod[8] <- 1000
 for (m in list(function(v) ajustar_mm(v, 3), function(v) ajustar_ses(v, 0.3),
                function(v) ajustar_holt(v, 0.3, 0.2), ajustar_media, ajustar_ingenuo,
                function(v) ajustar_tendencia(v, "lineal"))) {
-  stopifnot(ok(m(y_test)$yhat[1:7], m(y_mod)$yhat[1:7]))   # cambiar y8 no altera yhat[1:7]
+  stopifnot(ok(m(y_test)$yhat[1:7], m(y_mod)$yhat[1:7]))   
 }
 cat("Verificacion de metodos: OK\n")
 ```
@@ -1441,15 +1454,60 @@ cat("Verificacion de metodos: OK\n")
 ```{r, echo=FALSE}
 y1   <- serie_1$y
 T1   <- length(y1)
-n0_1 <- floor(0.8 * T1)      # 136
-H1   <- 18                   # la ampliación tarda 18 meses
+n0_1 <- floor(0.8 * T1)  # 136
+H1   <- 18               # La ampliación tarda 18 meses
 
-#stopifnot(length(n0_1:(T1 - 1)) == 34, length(n0_1:(T1 - H1)) == 17)
+resumen_1 <- data.frame(
+  Parámetro = c(
+    "Tamaño de la serie (T)",
+    "Tamaño inicial de entrenamiento (n0)",
+    "Horizonte de pronóstico (H)",
+    "Orígenes para h = 1",
+    "Orígenes para h = H"
+  ),
+  Valor = c(
+    T1,
+    n0_1,
+    H1,
+    length(n0_1:(T1 - 1)),
+    length(n0_1:(T1 - H1))
+  )
+)
 
-print(c(T = T1, n0 = n0_1, H = H1,
-        origenes_h1 = length(n0_1:(T1 - 1)), origenes_H = length(n0_1:(T1 - H1))))
-print(serie_1$fecha[c(1, n0_1, T1)])
+kable(
+  resumen_1,
+  caption = "Resumen de parámetros para la Serie 1",
+  col.names = c("Parámetro", "Valor"),
+  align = c("l", "c"),
+  format = "latex",
+  booktabs = TRUE
+) %>%
+  kable_styling(
+    latex_options = c("hold_position", "striped"),
+    full_width = FALSE,
+    position = "center"
+  )
+
+fechas_1 <- data.frame(
+  Referencia = c("Inicio", "Origen inicial", "Final"),
+  Fecha = serie_1$fecha[c(1, n0_1, T1)]
+)
+
+kable(
+  fechas_1,
+  caption = "Fechas de referencia para la Serie 1",
+  align = c("l", "c"),
+  format = "latex",
+  booktabs = TRUE
+) %>%
+  kable_styling(
+    latex_options = c("hold_position", "striped"),
+    full_width = FALSE,
+    position = "center"
+  )
 ```
+
+**Comentario (partición, Serie 1).** Con $T=170$ y $n_0=\lfloor 0{,}8\cdot170\rfloor=136$ (corte en 2023-02-01), el horizonte es $H=18$ porque la ampliación tarda 18 meses entre la decisión y la puesta en marcha. Esto da 34 orígenes para $h=1$ ($o=136,\dots,169$) y 17 para $h=18$ ($o=136,\dots,152$). Los parámetros se eligen solo con las observaciones 1 a 136; las 34 restantes quedan para evaluar.
 
 ### optimizacion de parametros y metodos posibles
 
@@ -1467,6 +1525,10 @@ print(c(MM = opt_mm$inicio_comun, DMM = opt_dmm$inicio_comun,
         SES = opt_ses$inicio_comun, Holt = opt_holt$inicio_comun))
 ```
 
+**Comentario (parámetros, Serie 1).** En el tramo de estimación el MSE de un paso elige: media móvil $k=2$ (MSE 34,69), doble media móvil $k=11$ (32,46), SES $\alpha=0{,}70$ (33,03) y Holt $\alpha=0{,}5$, $\beta=0{,}05$ (30,75). Holt tiene el menor MSE de los cuatro, coherente con una serie de tendencia. El $k=2$ de la media móvil está en el borde de la rejilla: el MSE crece con $k$ porque promediar más datos atrasa el nivel cuando hay tendencia.
+
+
+
 ```{r, echo=FALSE}
 # ITEM 6(a) - Curvas y mapa de MSE
 (graficar_mse_1d(opt_mm,  "k",     "MSE de un paso: media móvil") |
@@ -1474,6 +1536,8 @@ print(c(MM = opt_mm$inicio_comun, DMM = opt_dmm$inicio_comun,
 (graficar_mse_1d(opt_ses, "alpha", "MSE de un paso: SES") |
  graficar_mse_holt(opt_holt,       "MSE de un paso: Holt"))
 ```
+
+**Comentario (curvas de MSE, Serie 1).** La curva de la media móvil sube de forma monótona con $k$; la de la doble media móvil baja hasta $k\approx 9$–$11$ y luego se aplana; la de SES cae bruscamente para $\alpha$ pequeño (MSE > 750 con $\alpha=0{,}02$) y es casi plana desde $\alpha\approx0{,}5$; y el mapa de Holt tiene su mínimo en $\beta$ pequeño ($0{,}05$), es decir, una pendiente que se actualiza despacio. Todos los óptimos son interiores a la rejilla salvo $k=2$.
 
 ```{r, echo=FALSE}
 # ITEM 6(b) - Tendencias por mínimos cuadrados sobre la serie completa
@@ -1492,6 +1556,10 @@ for (tp in tipos) {
   cat("R2:", round(fits[[tp]]$r2, 4), "\n")
 }
 ```
+
+**Serie 1.** Todas las tendencias son estadísticamente significativas con el error robusto: lineal ($\hat\beta_1=1{,}19$, $t=15{,}0$, $R^2=0{,}881$), cuadrática ($\hat\beta_2=0{,}00922$, $t=17{,}0$, $R^2=0{,}984$) y exponencial ($\hat\beta_1=0{,}00246$ en escala log, $t=17{,}9$, $R^2=0{,}906$), todas con $|t|>1{,}974$. La cuadrática es la que mejor describe el ajuste dentro de la muestra, coherente con el crecimiento que se acelera desde 2020. Pero el error robusto es unas 2,4 veces el ordinario (por ejemplo, 0,0792 frente a 0,0336 en $\hat\beta_1$ lineal), lo que muestra que los errores están muy autocorrelacionados y que la inferencia ordinaria sería demasiado optimista.
+
+
 
 ### correlogramas de metodos serie 1
 
@@ -1512,6 +1580,10 @@ for (tp in tipos) {
 }
 ```
 
+**Revisión de supuestos (Serie 1).** Los tres correlogramas de residuos decaen despacio y quedan fuera de la banda en casi todos los rezagos, y la PACF tiene un pico en el rezago 1. Ljung–Box rechaza ruido blanco en las tres tendencias ($Q=2018$, $583$ y $1956$ frente a $\chi^2_{0{,}95;24}=36{,}42$; $p\approx0$). Durbin–Watson es $0{,}074$, $0{,}526$ y $0{,}109$, consistente con $2(1-r_1)=0{,}105$, $0{,}539$ y $0{,}137$: autocorrelación positiva fuerte. Jarque–Bera no rechaza normalidad (p = 0,054, 0,053 y 0,085; justo en el borde para las dos primeras). Conclusión: los supuestos de independencia fallan; las tendencias deterministas no capturan la dinámica de corto plazo, y por eso el error robusto es el que se usa.
+
+
+
 ### aplicacion de metodos serie 1
 
 ```{r, echo=FALSE}
@@ -1529,6 +1601,8 @@ ajust1 <- list(
 )
 ```
 
+**Asignación (Serie 1).** La serie tiene tendencia creciente y no tiene estacionalidad (F = 0,417, p = 0,947 en la prueba de la Sección 3). Por eso se aplican los métodos que sostienen una tendencia: Holt, doble media móvil y las tres tendencias por mínimos cuadrados. Como **contrastes** se aplican los que suponen nivel constante, que el diagnóstico contradice: media simple, media móvil y SES. El referente es el **ingenuo simple**, porque sin estacionalidad no hay un ingenuo estacional que tenga sentido.
+
 ```{r, echo=FALSE}
 # ITEM 6(c) - Origen móvil a h = 1 y h = H, mismos orígenes para todos, ordenado por RMSE
 tab_h1 <- tabla_origen_movil(y1, ajust1, n0_1, 1,  "Ingenuo (referente)")
@@ -1542,6 +1616,9 @@ cat("\nh =", H1, "(17 origenes)\n"); print(tab_H, digits = 4)
 # Error medio a h = H (signo del sesgo)
 print(sapply(names(ajust1), function(nm) mean(origen_movil(y1, ajust1[[nm]], n0_1, H1)$error)))
 ```
+
+**Resultados de origen móvil (Serie 1).** Con $h=1$ (34 orígenes) gana **Holt** con RMSE 5,134 (MAD 3,966; MAPE 0,688 %), frente a 5,665 del ingenuo: 9,4 % menos error. SES y media móvil quedan cerca del ingenuo (5,859 y 6,199). Con $h=18$ (17 orígenes) Holt gana por un margen grande: RMSE 6,751 contra 41,667 del ingenuo (0,162 del referente, 84 % menos). Los métodos sin tendencia (ingenuo, SES, media móvil) colapsan a 41–42, porque proyectan el último nivel mientras el consumo sube unas 2 mil m³ por mes, y la media simple es el peor (144,8). Las tendencias lineal y exponencial (60,9 y 57,3) **no superan al referente** a $h=18$, y a $h=1$ son las peores salvo la media simple (40,1 y 38,2): ajustadas a toda la historia, no siguen el nivel reciente. La cuadrática sí es competitiva (9,203 a $h=18$), aunque a $h=1$ es peor que el ingenuo (8,021). El error medio a $h=18$ de Holt es +3,31 (positivo: el consumo real queda por encima del pronóstico), señal de que subestima un crecimiento que se acelera; el de la doble media móvil es −3,52.
+
 
 ### validacion de metodos
 
@@ -1560,10 +1637,14 @@ ggplot(data.frame(fecha = serie_1$fecha[om1$objetivo], error = e1), aes(fecha, e
   theme_minimal()
 ```
 
+**Comentario (errores de Holt a un paso).** Los 34 errores oscilan alrededor de cero, entre unos −10 y +12,6 miles de m³, sin una racha larga del mismo signo ni una tendencia. Los picos más grandes (cerca de +12,6 a mediados de 2025 y −9,7 poco después) son aislados.
+
 ```{r, echo=FALSE}
 # ITEM 6(d) - Correlograma de los errores (banda con n = número de errores)
 correlograma(data.frame(y = e1))$panel
 ```
+
+**Comentario (correlograma de los errores).** Con la banda calculada sobre $n=34$ errores (≈ ±0,34), ningún rezago de la ACF ni de la PACF sale de la banda. El rezago 1 es positivo y pequeño ($r_1=0{,}149$) y el 2 es negativo (≈ −0,19), sin forma sistemática.
 
 ```{r, echo=FALSE}
 # ITEM 6(d) - t de media cero, Ljung-Box (chi2_m), Jarque-Bera y Durbin-Watson
@@ -1580,6 +1661,15 @@ cat(sprintf("Durbin-Watson: d = %.3f, r1 = %.3f, 2(1-r1) = %.3f\n",
             val1$dw$d, val1$dw$r1, val1$dw$aprox_2_1_menos_r1))
 ```
 
+**Pruebas sobre los errores de Holt ($n=34$, nivel 5 %).**
+
+- **Media cero.** $H_0:\mu=0$ frente a $H_1:\mu\neq0$. $t=\bar e/(s/\sqrt n)\sim t_{33}$ bajo $H_0$. Se rechaza si $|t|>2{,}035$. Observado: $t=-0{,}099$, $p=0{,}922$. No se rechaza: el método no tiene sesgo sistemático a un paso.
+- **Ljung–Box.** $H_0:\rho_1=\dots=\rho_8=0$ frente a $H_1$: alguna $\rho_k\neq0$. $Q=n(n+2)\sum_{k=1}^{m}\hat\rho_k^2/(n-k)\sim\chi^2_8$, con $m=\min\{\lfloor34/4\rfloor,24\}=8$. Se rechaza si $Q>15{,}507$. Observado: $Q=4{,}197$, $p=0{,}839$. No se rechaza: los errores no tienen autocorrelación detectable.
+- **Jarque–Bera.** $H_0$: los errores son normales (asimetría 0, curtosis 3). $JB=\tfrac n6\left(S^2+\tfrac{(K-3)^2}{4}\right)\sim\chi^2_2$. Se rechaza si $JB>5{,}991$. Observado: $JB=0{,}770$, $p=0{,}68$. No se rechaza.
+- **Durbin–Watson.** $d=1{,}676\approx2(1-r_1)=1{,}701$, con $r_1=0{,}149$: no hay autocorrelación de primer orden apreciable.
+
+**Lectura.** Holt no deja estructura lineal sin aprovechar a un paso. Con solo 34 errores la potencia es baja: no rechazar no prueba que no haya estructura, solo que no se ve. El único indicio es la aceleración del consumo, que Holt subestima a horizontes largos (error medio +3,3 a $h=18$).
+
 ### e
 
 ```{r, echo=FALSE}
@@ -1588,6 +1678,8 @@ sd_h <- vapply(1:H1, function(h) sd(origen_movil(y1, ajust1[[ganador_h1]], n0_1,
                numeric(1))
 print(round(sd_h, 2))
 ```
+
+**Comentario.** La desviación de los errores crece de 5,21 ($h=1$) a un máximo de 10,22 ($h=13$) y vuelve a 6,06 en $h=18$. No es monótona porque a horizontes largos hay pocos orígenes (17 para $h=18$) y la desviación se calcula con muestras pequeñas; aun así la incertidumbre de Holt a un año es casi el doble que a un mes.
 
 ```{r, echo=FALSE}
 # ITEM 6(e) - Ganador reajustado sobre toda la serie y H pronósticos con banda heurística
@@ -1612,6 +1704,8 @@ ggplot() +
   theme_minimal()
 ```
 
+**Pronóstico final y respuesta a la junta (Serie 1).** Holt, reajustado con las 170 observaciones, proyecta un consumo de 608,5 miles de m³ en enero de 2026 y de 642,5 miles de m³ en junio de 2027, lo que representa un aumento aproximado de 2,0 miles de m³ por mes. El pronóstico puntual no supera el umbral de 650 miles de m³ durante los 18 meses evaluados; sin embargo, el límite superior de la banda heurística sí lo supera desde diciembre de 2026 (650,5). Esta banda no constituye un intervalo de confianza. Si se prolonga la tendencia estimada, únicamente como referencia, el pronóstico puntual alcanzaría los 650 miles de m³ hacia octubre de 2027. Por tanto, se recomienda tomar precauciones desde los primeros meses del horizonte de pronóstico y no esperar a que transcurran los 18 meses ni a que el consumo observado supere el umbral. Dado que la banda superior lo alcanza desde diciembre de 2026 y que la ampliación requiere 18 meses, es necesario anticipar la decisión para evitar que la capacidad disponible resulte insuficiente. Además, Holt tiende a subestimar el consumo (error medio de +3,3 miles de m³ para \(h=18\)), lo que refuerza la importancia de actuar preventivamente.
+
 ## serie 2
 
 ```{r, echo=FALSE}
@@ -1626,6 +1720,8 @@ print(c(T = T2, n0 = n0_2, H = H2,
 print(serie_2$fecha[c(1, n0_2, T2)])
 
 ```
+
+**Comentario (partición, Serie 2).** $T=220$, $n_0=176$ (corte 2025-07-28) y $H=7$, una semana, que es el horizonte de decisión de la alerta. Hay 44 orígenes para $h=1$ y 38 para $h=7$.
 
 ### optimizacion de parametros
 
@@ -1644,7 +1740,7 @@ print(c(MM = opts2_mm$inicio_comun, DMM = opts2_dmm$inicio_comun,
 
 ```
 
-
+**Comentario (parámetros, Serie 2).** Media móvil $k=2$ (MSE 11,45), doble media móvil $k=10$ (16,71), SES $\alpha=0{,}98$ (9,30) y Holt $\alpha=0{,}95$, $\beta=0{,}05$ (9,78). Los óptimos de SES y Holt están en el borde superior de $\alpha$: para un paso conviene casi copiar el último valor, lo que es la huella de la autocorrelación positiva ($r_1=0{,}61$). Con $\alpha=0{,}98$ SES es prácticamente el ingenuo.
 
 ```{r, echo=FALSE}
 
@@ -1655,8 +1751,9 @@ print(c(MM = opts2_mm$inicio_comun, DMM = opts2_dmm$inicio_comun,
 
 ```
 
+**Comentario (curvas).** El MSE de SES baja de forma continua hasta $\alpha=0{,}98$; el mapa de Holt tiene su mínimo en la esquina de $\alpha$ alto y $\beta$ bajo; la media móvil es mínima en $k=2$ y la doble media móvil en $k=10$. Que varios óptimos queden en el borde de la rejilla se reporta como límite de la búsqueda, no como un valor "interior".
 
-### correlogramas 
+### correlogramas
 
 ```{r, echo=FALSE}
 
@@ -1678,7 +1775,7 @@ for (tp in tipos_s2) {
 
 ```
 
-
+**Regresiones (Serie 2).** Ninguna tendencia es significativa con el error robusto: lineal $\hat\beta_1=0{,}00639$ ($t=1{,}23$, $p=0{,}219$, $R^2=0{,}013$), cuadrática $\hat\beta_2=0{,}00002$ ($t=0{,}205$, $p=0{,}838$, $R^2=0{,}014$) y exponencial $\hat\beta_1=0{,}000182$ ($t=1{,}20$, $p=0{,}231$, $R^2=0{,}012$), todas con $|t|<1{,}971$. Esto confirma numéricamente que la serie no tiene tendencia.
 
 ```{r, echo=FALSE}
 
@@ -1698,7 +1795,7 @@ for (tp in tipos_s2) {
 
 ```
 
-
+**Revisión de supuestos (Serie 2).** Los tres juegos de residuos tienen la misma forma que la serie original: ACF con picos en los rezagos 1 y 2 y PACF con picos en 1 (positivo) y 2 (negativo). Ljung–Box rechaza ruido blanco ($Q=138{,}45$, $138{,}82$ y $140{,}34$ frente a 36,42; $p\approx10^{-18}$) y Durbin–Watson es ≈ 0,78 ($2(1-r_1)=0{,}79$). La dependencia que no capturan es la de un AR(2). Jarque–Bera no rechaza normalidad en la lineal y la cuadrática ($p=0{,}122$ y $0{,}120$), pero sí en la exponencial ($JB=9{,}71$, $p=0{,}0078$), porque el ajuste en escala log deforma los residuos.
 
 ```{r, echo=FALSE}
 
@@ -1709,6 +1806,8 @@ cat("Nivel final Media simple:", res_media$Extra_muestral(1), "\n")
 cat("Nivel final Ingenuo:     ", res_ingenuo$Extra_muestral(1), "\n")
 
 ```
+
+**Comentario.** El nivel final de la media simple es 34,72 µg/m³ y el del ingenuo es 40,1 (el último dato observado). Esa diferencia de unos 5,4 µg/m³ es el origen del desacuerdo entre métodos a $h=7$: uno cuenta con que la serie vuelve a su media, el otro asume que se queda donde está.
 
 ### aplicacion de metodos
 
@@ -1729,6 +1828,7 @@ ajust2 <- list(
 
 ```
 
+**Asignación (Serie 2).** La serie es estacionaria en media, sin tendencia (regresiones no significativas) y sin estacionalidad semanal (F = 0,340, p = 0,915; $r_7=-0{,}06$). Se aplican los métodos de nivel: ingenuo (referente), media simple, media móvil y SES. Como **contrastes** se aplican los que suponen tendencia, que el diagnóstico contradice: doble media móvil, Holt y las tres tendencias. El referente es el ingenuo simple, por no haber estacionalidad.
 
 
 ```{r, echo=FALSE}
@@ -1746,6 +1846,13 @@ print(sapply(names(ajust2), function(nm) mean(origen_movil(y_s2, ajust2[[nm]], n
 
 
 ```
+
+**Resultados de origen móvil (Serie 2).** El mejor método **cambia con el horizonte**.
+
+- Con $h=1$ (44 orígenes) **nadie supera al ingenuo** (RMSE 3,344; MAD 2,350; MAPE 6,73 %). SES empata (3,345; $\alpha=0{,}98$ lo hace casi idéntico) y Holt queda 2,5 % peor (3,428). Los métodos con tendencia o con media global quedan entre 13 % y 24 % peor (3,77 a 4,13).
+- Con $h=7$ (38 orígenes) el ingenuo pasa a ser de los peores (5,630). Ganan los que apuntan al nivel global: tendencia lineal (3,724; 0,661 del referente), exponencial (3,756), cuadrática (3,796) y media simple (3,836), con una mejora del 32–34 % sobre el ingenuo. Holt es el peor (6,550; 1,163 del referente), porque extrapola una pendiente que es ruido.
+
+Esto es lo esperado en un proceso estacionario con memoria corta (AR(2)): ayer informa mucho sobre mañana, pero a una semana la serie ya volvió hacia su media (≈ 34,7). Hay que notar que la tendencia lineal gana a $h=7$ aunque su pendiente no es significativa: su pronóstico es casi constante en la media, no una tendencia real.
 
 
 
@@ -1767,14 +1874,15 @@ ggplot(data.frame(fecha = serie_2$fecha[om2_1$objetivo], error = e2_1), aes(fech
 
 ```
 
-
-
+**Comentario (errores del ingenuo a un paso).** Los 44 errores son las primeras diferencias de la serie. Oscilan alrededor de cero entre unos −9 y +8,7 µg/m³, con saltos de signo frecuentes y sin tendencia, consistente con un error de media cero.
 
 ```{r, echo=FALSE}
 
 correlograma(data.frame(y = e2_1))$panel
 
 ```
+
+**Comentario (correlograma).** Con la banda calculada sobre $n=44$ errores (≈ ±0,30) ningún rezago sale de la banda; el rezago 5 de la ACF (≈ −0,23) es el mayor y queda dentro. La diferenciación del ingenuo eliminó la autocorrelación de corto plazo de la serie original.
 
 ### validacion
 
@@ -1794,6 +1902,82 @@ cat(sprintf("Durbin-Watson: d = %.3f, r1 = %.3f, 2(1-r1) = %.3f\n",
 
 ```
 
+**Pruebas sobre los errores del ingenuo ($n=44$, nivel 5 %).**
+
+- **Media cero**
+
+  **Hipótesis:**
+  $$
+  H_0:\mu=0
+  \qquad \text{vs.} \qquad
+  H_1:\mu\neq 0
+  $$
+
+  **Estadístico de prueba:**
+  $$
+  t=\frac{\bar e}{s/\sqrt{n}}\sim t_{43}
+  $$
+
+  **Regla de decisión:** Rechazar \(H_0\) si \(|t|>2{,}017\).
+
+  **Resultado:** \(t=0{,}286\), \(p=0{,}777\).
+
+  **Conclusión:** No se rechaza \(H_0\). No existe evidencia estadística suficiente para afirmar que el promedio de los errores sea diferente de cero.
+
+- **Ljung–Box**
+
+  **Hipótesis:**
+  $$
+  H_0:\rho_1=\rho_2=\cdots=\rho_{11}=0
+  $$
+  
+  $$
+  H_1:\text{al menos una }\rho_j\neq 0,\quad j=1,\ldots,11
+  $$
+
+  **Estadístico de prueba:**
+  $$
+  Q\sim\chi^2_{11},
+  \qquad m=\left\lfloor\frac{44}{4}\right\rfloor=11
+  $$
+
+  **Regla de decisión:** Rechazar $H_0$ si $Q>19{,}675$.
+
+  **Resultado:** $Q=10{,}932$, $p=0{,}449$.
+
+  **Conclusión:** No se rechaza $H_0$. No se encuentra evidencia estadística suficiente de autocorrelación conjunta en los primeros 11 rezagos de los errores.
+
+- **Jarque–Bera**
+
+  **Hipótesis:**
+  $$
+  H_0:\text{los errores siguen una distribución normal}
+  $$
+  
+  $$
+  H_1:\text{los errores no siguen una distribución normal}
+  $$
+
+  **Estadístico de prueba:**
+  $$
+  JB\sim\chi^2_2
+  $$
+
+  **Regla de decisión:** Rechazar $(H_0$ si $JB>5{,}991$.
+
+  **Resultado:** $JB=2{,}282$, $p=0{,}319$.
+
+  **Conclusión:** No se rechaza $H_0$. No existe evidencia estadística suficiente para afirmar que los errores no siguen una distribución normal.
+
+- **Durbin–Watson**
+
+  **Hipótesis:**
+  $$
+  H_0:\rho_1=0
+  \qquad \text{vs.} \qquad
+  H_1
+  $$
+  
 ### e
 
 ```{r, echo=FALSE}
@@ -1805,7 +1989,7 @@ print(round(sd2_h, 3))
 
 ```
 
-
+**Comentario.** La desviación de los errores del ingenuo crece de 3,38 ($h=1$) a 6,40 ($h=5$) y baja a 5,69 en $h=7$. Se estabiliza alrededor de 6, que es aproximadamente $\sqrt2$ veces la desviación de la serie (3,54): a partir de cierto horizonte el ingenuo ya no aporta más que dos valores independientes.
 
 ```{r, echo=FALSE}
 
@@ -1821,8 +2005,6 @@ print(df2_fc)
 
 
 ```
-
-
 
 ```{r, echo=FALSE}
 
@@ -1842,6 +2024,7 @@ print(p_final)
 
 ```
 
+**Pronóstico final y respuesta a la alcaldía (Serie 2).** El ingenuo reajustado da 40,1 µg/m³ para los siete días; la banda heurística va de 33,5 a 46,7 en el día 1 y se ensancha hasta ≈ 27,5–52,7. Para **mañana** el pronóstico (40,1) supera el umbral de 37, aunque el límite inferior de la banda (33,5) lo deja por debajo, así que la señal de alerta es clara pero no concluyente. Para los **días siguientes**, mantener 40,1 constante no es defendible: a $h=7$ el ingenuo tiene un RMSE de 5,63 frente a 3,72 de la tendencia lineal, y los métodos que apuntan a la media global (≈ 34,7 µg/m³) quedan **por debajo de 37**. La recomendación es alerta para mañana y reevaluar cada día, en lugar de extender la alerta a toda la semana. 
 
 ## serie 3
 
@@ -1860,6 +2043,8 @@ print(serie_3$fecha[c(1, n0_3, T3)])
 
 
 ```
+
+**partición, Serie 3** $T=168$, $n_0=134$ (corte 2023-02-01) y $H=12$, porque la empresa necesita saber cuáles de los próximos doce meses requieren tanques. Hay 34 orígenes para $h=1$ y 23 para $h=12$.
 
 
 ### optimizacion de parametros para los metodos
@@ -1882,6 +2067,9 @@ print(c(HW_adit = opts3_hw$inicio_comun, HW_multi = opts3_hmulti$inicio_comun))
 
 ```
 
+**Parámetros Serie 3** Holt–Winters aditivo y multiplicativo eligen los mismos valores, $\alpha=0{,}05$, $\beta=0{,}05$ y $\gamma=0{,}5$, con MSE 137,2 y 139,3. Un $\alpha$ y un $\beta$ en el mínimo de la rejilla indican que el nivel y la pendiente casi no se actualizan, coherente con una serie sin tendencia y de nivel estable (≈ 154 m³/s). Un $\gamma=0{,}5$ dice que los índices estacionales sí se van ajustando.
+
+
 
 ```{r, echo=FALSE}
 
@@ -1894,6 +2082,8 @@ cat("Nivel final Ingenuo estacional:", res_ing_est_s3$Extra_muestral(1), "\n")
 
 
 ```
+
+**Comentario.** El ingenuo simple proyecta 156,1 $m^3/s$ (el último dato, diciembre) y el estacional 179,6 (el de enero de 2025), una diferencia de 23,5 m³/s para el primer mes pronosticado: el ingenuo simple ignora que enero es un mes de caudal alto.
 
 ### aplicacion de metodos
 
@@ -1916,6 +2106,9 @@ ajust3 <- list(
 
 ```
 
+**Asignación (Serie 3).** La serie es estacional con período 12 (F = 95,28, p ≈ 0) y sin tendencia. Se aplican los métodos con componente estacional: ingenuo estacional, tendencia con ficticias de suma cero y Holt–Winters aditivo. La descomposición se justificó como **aditiva** (desviación relativa 6,21 % frente a 6,28 %; correlación nivel–amplitud 0,11). Como **contrastes** se aplican Holt–Winters multiplicativo (supuesto que la evidencia no respalda) y el ingenuo simple, que ignora la estacionalidad. El **referente es el ingenuo estacional**, no el simple: es el que compite en igualdad de condiciones con métodos estacionales.
+
+
 ```{r, echo=FALSE}
 
 n_oseg_h1 <- length(n0_3:(T3 - 1))
@@ -1936,6 +2129,9 @@ print(sapply(names(ajust3), function(nm) mean(origen_movil(y_s3, ajust3[[nm]], n
 
 ```
 
+**Resultados de origen móvil (Serie 3).** Con $h=1$ (34 orígenes) gana la **tendencia con ficticias**: RMSE 11,38 (MAD 8,58; MAPE 5,17 %), es decir 0,873 del ingenuo estacional (13,04), una mejora del 12,7 %. Holt–Winters multiplicativo (11,73) y aditivo (11,88) quedan cerca. El ingenuo simple (33,76) es 2,6 veces peor que el referente, porque no sabe que el caudal oscila entre ≈ 100 y ≈ 200. Con $h=12$ (23 orígenes) gana otra vez la tendencia con ficticias (10,89; 0,887 del referente), seguida de Holt–Winters multiplicativo (11,59) y aditivo (11,66). **El ingenuo simple y el ingenuo estacional dan exactamente lo mismo a $h=12$ (12,27)**.
+
+
 ```{r, echo=FALSE}
 
 ganador3_h1 <- tab3_h1$metodo[1]
@@ -1954,11 +2150,15 @@ ggplot(data.frame(fecha = serie_3$fecha[om3_1$objetivo], error = e3_1), aes(fech
 
 ```
 
+**Comentario (errores de la tendencia con ficticias).** Los 34 errores oscilan entre −22 y +33 m³/s, casi todos entre −10 y +17, sin tendencia. Hay dos errores grandes aislados (≈ −22 al inicio de la evaluación y ≈ +33 hacia fines de 2025). Ese +33 coincide con el pico de 218 m³/s observado en 2025, el máximo de toda la serie.
+
 ```{r, echo=FALSE}
 
 correlograma(data.frame(y = e3_1))$panel
 
 ```
+
+**Comentario (correlograma).** Con la banda sobre $n=34$ errores (≈ ±0,34) ningún rezago sale de la banda. El rezago 1 es negativo ($r_1=-0{,}237$) y el 6 ligeramente positivo (≈ +0,25), ambos dentro de la banda.
 
 ### Validacion
 
@@ -1979,6 +2179,59 @@ cat(sprintf("Durbin-Watson: d = %.3f, r1 = %.3f, 2(1-r1) = %.3f\n",
 
 ```
 
+**Pruebas sobre los errores de la tendencia con ficticias (\(n=34\), nivel de significancia del 5 %).**
+
+- **Media cero.**
+
+  $$H_0:\mu=0$$
+
+  $$H_1:\mu\neq 0$$
+
+**Pruebas sobre los errores de la tendencia con ficticias (\(n=34\), nivel de significancia del 5 %).**
+
+- **Media cero.**
+
+  $$
+  H_0:\mu=0
+  \qquad
+  H_1:\mu\neq 0
+  $$
+
+  El estadístico sigue una distribución $t_{33}$ y se rechaza $H_0$ si $|t|>2{,}035$. Se obtiene $t=1{,}552$ y $p=0{,}130$; por tanto, no se rechaza \(H_0\). Aunque el error medio es de $+5{,}1\ \text{m}^3/\text{s}$, no hay evidencia suficiente para afirmar que difiere de cero.
+
+- **Ljung–Box.**
+
+  $$
+  H_0:\rho_1=\rho_2=\cdots=\rho_8=0
+  $$
+
+  $$
+  H_1:\exists\,j\in\{1,\ldots,8\}:\rho_j\neq 0
+  $$
+
+  El estadístico sigue aproximadamente una distribución $\chi^2_8$, con $m=\lfloor34/4\rfloor$, y se rechaza $H_0$ si $Q>15{,}507$. Se obtiene $Q=6{,}968$ y $p=0{,}54$; por tanto, no se rechaza $H_0$. No se encuentra evidencia suficiente de autocorrelación conjunta en los primeros ocho rezagos.
+
+- **Jarque–Bera.**
+
+  $$
+  H_0:\text{los errores siguen una distribución normal}
+  $$
+
+  $$
+  H_1:\text{los errores no siguen una distribución normal}
+  $$
+
+  El estadístico sigue aproximadamente una distribución $\chi^2_2$ y se rechaza $H_0$ si $JB>5{,}991$. Se obtiene $JB=0{,}697$ y $p=0{,}706$; por tanto, no se rechaza $H_0$. Los errores son compatibles con una distribución normal.
+
+- **Durbin–Watson.**
+
+  $$
+  H_0:\rho_1=0
+  \qquad
+  H_1:\rho_1\neq 0
+  $$
+
+  Se obtiene $d=2,123$ y $r_1=-0{,}237$. Como d es cercano a 2, no hay evidencia clara de autocorrelación de primer orden. La aproximación $d\approx 2(1-r_1)=2{,}474$ no coincide exactamente con el valor observado, por lo que debe interpretarse con cautela. 
 ### e
 
 ```{r, echo=FALSE}
@@ -1990,8 +2243,7 @@ print(round(sd3_h, 3))
 
 ```
 
-
-
+**Comentario.** La desviación de los errores es estable entre 9,7 y 11,2 m³/s a todos los horizontes, y no crece con $h$. Es lo esperado cuando el pronóstico depende solo de índices mensuales fijos y no de un nivel que se arrastra.
 
 ```{r, echo=FALSE}
 
@@ -2018,4 +2270,4 @@ print(p_final3)
 
 ```
 
-
+**Pronóstico final y respuesta a la empresa de acueducto (Serie 3).** El pronóstico puntual **nunca baja de 110 m³/s**: el mínimo es mayo de 2026 con 116,1. La banda heurística, en cambio, tiene su límite inferior por debajo de 110 en tres meses: **mayo (95,0), noviembre (103,6) y junio (106,4)**. Esos son los meses en que conviene preparar los tanques, con **mayo como el más crítico** (el único donde el punto está a solo 6 m³/s del umbral y el límite inferior cae 15 por debajo). Coincide con las medias mensuales históricas de la serie (mayo 111,2; noviembre 117,6; junio 121,9).
