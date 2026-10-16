@@ -1,11 +1,5 @@
 # serie 2
 
-source("R/00-lectura.R")
-source("R/01-graficos.R")
-source("R/02-operadores.R")
-source("R/03-dependencia.R")
-source("R/04-metodos.R")
-source("R/05-evaluacion.R")
 
 serie_2 <- leer_serie("datos/STJNKV-serie-2.csv", "estación de monitoreo del centro de Villa Clara", 
                       "µg/m³")
@@ -150,9 +144,9 @@ n_s2 <- length(w_s2)
 w_cs2 <- w_s2 - mean(w_s2)
 
 
-gamma0_s2 <- sum(w_s2 * w_s2) / n_s2
-gamma1_s2 <- sum(w_s2[1:(n_s2-1)] * w_s2[2:n_s2]) / n_s2
-gamma2_s2 <- sum(w_s2[1:(n_s2-2)] * w_s2[3:n_s2]) / n_s2
+gamma0_s2 <- sum(w_cs2 * w_cs2) / n_s2
+gamma1_s2 <- sum(w_cs2[1:(n_s2-1)] * w_cs2[2:n_s2]) / n_s2
+gamma2_s2 <- sum(w_cs2[1:(n_s2-2)] * w_cs2[3:n_s2]) / n_s2
 
 # sistema lineal series 1
 
@@ -181,265 +175,208 @@ ggsave(
 
 #----pronostico----
 
+# ==== CHUNK 1: Lectura y parametros (dado por el usuario) ====
 
-y_s2 <- serie_2$y 
+y_s2 <- serie_2$y
 
-## ---- Metodos sin parametro ----
+T2   <- length(y_s2)
+n0_2 <- floor(0.8 * T2)
+H2   <- 7
+
+print(c(T = T2, n0 = n0_2, H = H2,
+        origenes_h2 = length(n0_2:(T2 - 1)), origenes_H = length(n0_2:(T2 - H2))))
+print(serie_2$fecha[c(1, n0_2, T2)])
+
+# ==== FIN CHUNK 1 ====
+
+
+# ==== CHUNK 2: Optimos (dado por el usuario) ====
+
+opts2_mm   <- optimizar(y_s2, "mm",   data.frame(k = 2:12), n0 = n0_2)
+opts2_dmm  <- optimizar(y_s2, "dmm",  data.frame(k = 3:12), n0 = n0_2)
+opts2_ses  <- optimizar(y_s2, "ses",  data.frame(alpha = seq(0.02, 0.98, by = 0.02)), n0 = n0_2)
+opts2_holt <- optimizar(y_s2, "holt", expand.grid(alpha = seq(0.05, 0.95, by = 0.05),
+                                                  beta  = seq(0.05, 0.95, by = 0.05)), n0 = n0_2)
+
+print(opts2_mm$optimo);   print(opts2_dmm$optimo)
+print(opts2_ses$optimo);  print(opts2_holt$optimo)
+print(c(MM = opts2_mm$inicio_comun, DMM = opts2_dmm$inicio_comun,
+        SES = opts2_ses$inicio_comun, Holt = opts2_holt$inicio_comun))
+
+# ==== FIN CHUNK 2 ====
+
+
+# ==== CHUNK 3: ITEM 6(a) - Curvas y mapa de MSE (dado por el usuario) ====
+
+(graficar_mse_1d(opts2_mm,  "k",     "MSE de un paso: media movil") |
+   graficar_mse_1d(opts2_dmm, "k",     "MSE de un paso: doble media movil")) /
+  (graficar_mse_1d(opts2_ses, "alpha", "MSE de un paso: SES") |
+     graficar_mse_holt(opts2_holt,       "MSE de un paso: Holt"))
+
+# ==== FIN CHUNK 3 ====
+
+
+# ==== CHUNK 4: ITEM 6(b) - Tendencias por minimos cuadrados (serie completa) ====
+
+
+tipos_s2 <- c("lineal", "cuadratica", "exponencial")  # metodos de contraste (no aplican por diagnostico)
+fits_s2  <- setNames(lapply(tipos_s2, function(tp) ajustar_tendencia(y_s2, tp)), tipos_s2)
+
+resid_reg_s2 <- list(
+  lineal      = fits_s2$lineal$residuales,
+  cuadratica  = fits_s2$cuadratica$residuales,
+  exponencial = log(y_s2) - log(fits_s2$exponencial$ajustados))   # exponencial en escala log
+
+for (tp in tipos_s2) {
+  cat("\n--- Tendencia", tp, "(exponencial: coeficientes en escala log) ---\n")
+  print(fits_s2[[tp]]$tabla, digits = 4)
+  cat("t critico (5%, gl = n - k):",
+      round(qt(0.975, T2 - nrow(fits_s2[[tp]]$tabla)), 3), "\n")   
+  cat("R2:", round(fits_s2[[tp]]$r2, 4), "\n")
+}
+
+# ==== FIN CHUNK 4 ====
+
+# ==== CHUNK 5: Correlogramas de tendencias (dado por el usuario) ====
+# ITEM 6(b) - Residuos: correlograma, Ljung-Box (chi2_m), Jarque-Bera, Durbin-Watson
+
+for (tp in tipos_s2) {
+  e <- resid_reg_s2[[tp]]
+  v <- validar_errores(e, m = 24)
+  cat("\n--- Residuos de la tendencia", tp, "---\n")
+  print(correlograma(data.frame(y = e))$panel)
+  cat(sprintf("Ljung-Box (m = 24, 24 gl): Q = %.2f, critico = %.2f, p = %.3g\n",
+              v$lb$obs, qchisq(0.95, 24), v$lb$p))
+  cat(sprintf("Jarque-Bera (2 gl): JB = %.2f, critico = %.2f, p = %.3g\n",
+              v$jb$obs, qchisq(0.95, 2), v$jb$p))
+  cat(sprintf("Durbin-Watson: d = %.3f, r1 = %.3f, 2(1-r1) = %.3f\n",
+              v$dw$d, v$dw$r1, v$dw$aprox_2_1_menos_r1))
+}
+
+# ==== FIN CHUNK 5 ====
+
+
+# ==== CHUNK 6: Calculo rapido de los dos referentes "ingenuos" (inspeccion individual) ====
+
 res_media   <- ajustar_media(y_s2)
 res_ingenuo <- ajustar_ingenuo(y_s2)
 
-## ---- Media movil (k = 2,...,12) ----
-rejilla_mm <- data.frame(k = 2:12)
-res_mm     <- optimizar(y_s2, "mm", rejilla_mm)
-mm_final   <- ajustar_mm(y_s2, k = res_mm$optimo$k)
-g_mm <- graficar_mse_1d(res_mm, "k", "MSE - Media Movil (serie_2)")
+cat("Nivel final Media simple:", res_media$Extra_muestral(1), "\n")
+cat("Nivel final Ingenuo:     ", res_ingenuo$Extra_muestral(1), "\n")
 
-## ---- SES (alpha = 0.02,...,0.98) ----
-rejilla_ses <- data.frame(alpha = seq(0.02, 0.98, by = 0.02))
-res_ses     <- optimizar(y_s2, "ses", rejilla_ses)
-ses_final   <- ajustar_ses(y_s2, alpha = res_ses$optimo$alpha)
-g_ses <- graficar_mse_1d(res_ses, "alpha", "MSE - SES (serie_2)")
-
-## ---- Doble media movil (k = 3,...,12) ----
-rejilla_dmm <- data.frame(k = 3:12)
-res_dmm     <- optimizar(y_s2, "dmm", rejilla_dmm)
-dmm_final   <- ajustar_dmm(y_s2, k = res_dmm$optimo$k)
-g_dmm <- graficar_mse_1d(res_dmm, "k", "MSE - Doble Media Movil (serie_2)")
-
-## ---- Tendencias (contraste) ----
-tend_lineal <- ajustar_tendencia(y_s2, tipo = "lineal")
-tend_cuad   <- ajustar_tendencia(y_s2, tipo = "cuadratica")
-tend_exp    <- ajustar_tendencia(y_s2, tipo = "exponencial")
-
-## ---- Holt (contraste, rejilla alpha,beta paso 0.05) ----
-alpha_seq    <- seq(0.05, 0.95, by = 0.05)
-rejilla_holt <- expand.grid(alpha = alpha_seq, beta = alpha_seq)
-res_holt     <- optimizar(y_s2, "holt", rejilla_holt)
-holt_final   <- ajustar_holt(y_s2, alpha = res_holt$optimo$alpha,
-                             beta  = res_holt$optimo$beta)
-g_holt <- graficar_mse_holt(res_holt, "MSE - Holt (serie_2)")
-
-(g_mm | g_ses) / (g_dmm | g_holt)
-
-resumen_optimos <- tibble(
-  metodo    = c("Media movil", "SES", "Doble media movil", "Holt"),
-  parametro = c(paste("k =", res_mm$optimo$k),
-                paste("alpha =", res_ses$optimo$alpha),
-                paste("k =", res_dmm$optimo$k),
-                paste("alpha =", res_holt$optimo$alpha,
-                      ", beta =", res_holt$optimo$beta)),
-  mse_min   = c(res_mm$optimo$mse, res_ses$optimo$mse,
-                res_dmm$optimo$mse, res_holt$optimo$mse)
-)
-print(resumen_optimos)
-
-cat("Beta final de Holt:", holt_final$parametros$beta,
-    "-> si es cercano a 0, confirma ausencia de tendencia local\n")
+# ==== FIN CHUNK 6 ====
 
 
-m_lb <- 24   # rezagos para Ljung-Box (regla practica para datos diarios)
+# ==== CHUNK 7: ITEM 6(c) - Metodos aplicados a la serie 2 ====
+# Referente tecnico: Ingenuo (coincide con el diagnostico: Y_t = Y_{t-1} + e_t).
+# Media simple se incluye como referente alterno/contraste: asume nivel
+# constante (estacionariedad), lo cual contradice el diagnostico de la serie.
 
-diagnosticar_tendencia <- function(fit, nombre) {
-  
-  e <- fit$residuales
-  n <- length(e)
-  
-  # Correlograma (usa acf_muestral_m y acf()/pacf() solo de verificacion internos)
-  corr <- correlograma(tibble(y = e), m = m_lb)
-  print(corr$panel)
-  cat("Diferencia maxima ACF manual vs R (verificacion):",
-      corr$diferencia_maxima, "\n")
-  
-  # Ljung-Box
-  r_lb <- acf_muestral_m(e, m_lb)
-  lb   <- ljung_box(r_lb, T_obs = n, m = m_lb, p = 0)
-  
-  # Jarque-Bera
-  jb <- jarque_bera(e)
-  
-  # Durbin-Watson: propio vs aproximacion vs el calculado dentro de la tendencia
-  dw_propio <- durbin_watson(e)
-  r1        <- acf_muestral_m(e, 1)
-  dw_aprox  <- 2 * (1 - r1)
-  
-  cat("\n----", nombre, "----\n")
-  cat("DW (ajustar_tendencia): ", round(fit$dw, 4), "\n")
-  cat("DW (funcion propia):    ", dw_propio$estadistico, "\n")
-  cat("DW aproximado 2(1-r1):  ", round(dw_aprox, 4), "\n")
-  print(lb)
-  print(jb)
-  
-  list(ljung_box = lb, jarque_bera = jb, dw = dw_propio, panel = corr$panel)
-}
-
-diag_lineal <- diagnosticar_tendencia(tend_lineal, "Tendencia lineal")
-diag_cuad   <- diagnosticar_tendencia(tend_cuad,   "Tendencia cuadratica")
-diag_exp    <- diagnosticar_tendencia(tend_exp,    "Tendencia exponencial")
-
-
-H          <- 7    # horizonte evaluado (1 semana, serie diaria)
-n_origenes <- 44   # cantidad de origenes moviles
-
-origenes <- origen_movil(y_s2, n_origenes)
-
-k_mm       <- res_mm$optimo$k
-alpha_ses  <- res_ses$optimo$alpha
-k_dmm      <- res_dmm$optimo$k
-alpha_holt <- res_holt$optimo$alpha
-beta_holt  <- res_holt$optimo$beta
-
-# Lista de metodos: cada uno devuelve la funcion pronosticar(h)
-metodos_eval <- list(
-  "Ingenuo (referente)"   = function(ent) ajustar_ingenuo(ent)$pronosticar,
-  "Media simple"          = function(ent) ajustar_media(ent)$pronosticar,
-  "Media movil"           = function(ent) ajustar_mm(ent, k_mm)$pronosticar,
-  "SES"                   = function(ent) ajustar_ses(ent, alpha_ses)$pronosticar,
-  "Doble media movil"     = function(ent) ajustar_dmm(ent, k_dmm)$pronosticar,
-  "Tendencia lineal"      = function(ent) ajustar_tendencia(ent, "lineal")$pronosticar,
-  "Tendencia cuadratica"  = function(ent) ajustar_tendencia(ent, "cuadratica")$pronosticar,
-  "Tendencia exponencial" = function(ent) ajustar_tendencia(ent, "exponencial")$pronosticar,
-  "Holt"                  = function(ent) ajustar_holt(ent, alpha_holt, beta_holt)$pronosticar
+ajust2 <- list(
+  "Ingenuo (referente)"           = ajustar_ingenuo,
+  "Media simple" = ajustar_media,
+  "Media movil"       = function(v) ajustar_mm(v,  opts2_mm$optimo$k),
+  "SES "               = function(v) ajustar_ses(v, opts2_ses$optimo$alpha),
+  "Doble media movil (contraste)" = function(v) ajustar_dmm(v, opts2_dmm$optimo$k),
+  "Holt (contraste)"              = function(v) ajustar_holt(v, opts2_holt$optimo$alpha,
+                                                             opts2_holt$optimo$beta),
+  "Tendencia lineal (contraste)"      = function(v) ajustar_tendencia(v, "lineal",      calcular_yhat = FALSE),
+  "Tendencia cuadratica (contraste)"  = function(v) ajustar_tendencia(v, "cuadratica",  calcular_yhat = FALSE),
+  "Tendencia exponencial (contraste)" = function(v) ajustar_tendencia(v, "exponencial", calcular_yhat = FALSE)
 )
 
-errores_tabla <- purrr::map_dfr(origenes, function(org) {
-  
-  origen_actual <- org$origen
-  entrenamiento <- org$entrenamiento
-  
-  if (origen_actual + H > length(y_s2)) return(NULL)   # sin datos suficientes
-  
-  reales <- y_s2[(origen_actual + 1):(origen_actual + H)]
-  
-  purrr::map_dfr(names(metodos_eval), function(nombre_metodo) {
-    
-    pron_fn <- metodos_eval[[nombre_metodo]]
-    
-    # ajustar_tendencia imprime tabla en consola -> se silencia
-    pronosticar <- NULL
-    invisible(capture.output(pronosticar <- pron_fn(entrenamiento)))
-    pronosticos <- pronosticar(H)
-    
-    tibble(origen = origen_actual, metodo = nombre_metodo,
-           h = 1:H, real = reales, pronostico = pronosticos)
-  })
-})
-
-errores_tabla <- errores_tabla |> 
-  mutate(error     = real - pronostico,
-         error_abs = abs(error),
-         error_pct = abs(error / real) * 100)
-
-tabla_resumen <- errores_tabla |> 
-  filter(h %in% c(1, H)) |> 
-  group_by(metodo, h) |> 
-  summarise(RMSE = sqrt(mean(error^2, na.rm = TRUE)),
-            MAD  = mean(error_abs, na.rm = TRUE),
-            MAPE = mean(error_pct, na.rm = TRUE),
-            .groups = "drop") |> 
-  arrange(h, RMSE)
-
-print(tabla_resumen, n = Inf)
+# ==== FIN CHUNK 7 ====
 
 
-ganador_nombre <- tabla_resumen |>  filter(h == 1) |>  slice(1) |>  pull(metodo)
-cat("Metodo ganador en h=1:", ganador_nombre, "\n")
+# ==== CHUNK 8: ITEM 6(c) - Origen movil h=1 y h=H, mismos origenes, ordenado por RMSE ====
+# Conteo esperado de origenes (ver Chunk 1): h=1 -> 44 ; h=H2 -> 38
 
-errores_ganador_h1 <- errores_tabla |> 
-  filter(metodo == ganador_nombre, h == 1)
+tab2_h1 <- tabla_origen_movil(y_s2, ajust2, n0_2, 1,   "Ingenuo (referente)")
+tab2_H  <- tabla_origen_movil(y_s2, ajust2, n0_2, H2,  "Ingenuo (referente)")
 
-e <- errores_ganador_h1$error
-n_e <- length(e)
+stopifnot(all(tab2_h1$n_origenes == 44), all(tab2_H$n_origenes == 38))
 
-# 1) Grafico de errores en el tiempo
-g_errores <- ggplot(tibble(origen = errores_ganador_h1$origen, error = e),
-                    aes(x = origen, y = error)) +
-  geom_line() + geom_point() +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-  labs(title = paste("Errores de origen movil h=1 -", ganador_nombre),
-       x = "Origen", y = "Error") +
-  theme_minimal()
-print(g_errores)
+cat("h = 1 (44 origenes)\n");  print(tab2_h1, digits = 4)
+cat("\nh =", H2, "(38 origenes)\n"); print(tab2_H, digits = 4)
 
-# 2) Correlograma de los errores (banda calculada dentro de la funcion)
-m_d <- min(floor(n_e / 4), 20)
-corr_ganador <- correlograma(tibble(y = e), m = m_d)
-print(corr_ganador$panel)
+# Error medio a h = H (signo del sesgo)
+print(sapply(names(ajust2), function(nm) mean(origen_movil(y_s2, ajust2[[nm]], n0_2, H2)$error)))
 
-# 3) Prueba t de media cero (manual, sin usar t.test de forma directa como metodo)
-t_stat <- mean(e) / (sd(e) / sqrt(n_e))
-df_t   <- n_e - 1
-p_t    <- 2 * pt(-abs(t_stat), df = df_t)
-cat(sprintf("Prueba t media cero: t = %.4f, df = %d, p-valor = %.4f\n",
-            t_stat, df_t, p_t))
-
-# 4) Ljung-Box (p segun parametros del ganador: 0 para Ingenuo, 1 para SES, etc.)
-p_ganador <- switch(ganador_nombre,
-                    "Ingenuo (referente)" = 0,
-                    "SES"                 = 1,
-                    "Holt"                = 2,
-                    0)
-r_d  <- acf_muestral_m(e, m_d)
-lb_d <- ljung_box(r_d, T_obs = n_e, m = m_d, p = p_ganador)
-print(lb_d)
-
-# 5) Jarque-Bera
-jb_d <- jarque_bera(e)
-print(jb_d)
-
-# 6) Durbin-Watson
-dw_d <- durbin_watson(e)
-print(dw_d)
+# ==== FIN CHUNK 8 ====
 
 
+# ==== CHUNK 9: ITEM 6(d) - Errores de origen movil a un paso del ganador de h=1 ====
 
-H_final <- 7   # mismo horizonte evaluado en (c)
+ganador2_h1 <- tab2_h1$metodo[1]
+print(ganador2_h1)
 
-# Reajuste del ganador con toda la serie
-ganador_fit <- switch(ganador_nombre,
-                      "Ingenuo (referente)"   = ajustar_ingenuo(y_s2),
-                      "Media simple"          = ajusta_media(y_s2),
-                      "Media movil"           = ajustar_mm(y_s2, k_mm),
-                      "SES"                   = ajustar_ses(y_s2, alpha_ses),
-                      "Doble media movil"     = ajustar_dmm(y_s2, k_dmm),
-                      "Tendencia lineal"      = ajustar_tendencia(y_s2, "lineal"),
-                      "Tendencia cuadratica"  = ajustar_tendencia(y_s2, "cuadratica"),
-                      "Tendencia exponencial" = ajustar_tendencia(y_s2, "exponencial"),
-                      "Holt"                  = ajustar_holt(y_s2, alpha_holt, beta_holt)
-)
+om2_1 <- origen_movil(y_s2, ajust2[[ganador2_h1]], n0_2, 1)
+e2_1  <- om2_1$error
 
-pron_final <- ganador_fit$pronosticar(H_final)
-
-# Banda heuristica: +-1.96 * sd(error de origen movil) por cada horizonte
-sd_por_horizonte <- errores_tabla |> 
-  filter(metodo == ganador_nombre) |> 
-  group_by(h) |> 
-  summarise(sd_error = sd(error, na.rm = TRUE), .groups = "drop")
-
-banda <- sd_por_horizonte$sd_error[1:H_final] * 1.96
-
-fechas_futuras <- seq(max(serie_2$fecha) + 1, by = "day", length.out = H_final)
-
-df_pronostico <- tibble(
-  fecha   = fechas_futuras,
-  y       = pron_final,
-  lim_inf = pron_final - banda,
-  lim_sup = pron_final + banda
-)
-
-# Ultimo tramo de la serie para contexto visual
-ultimo_tramo <- serie_2 |>  slice_tail(n = 30) |>  select(fecha, y)
-
-g_pronostico <- ggplot() +
-  geom_line(data = ultimo_tramo, aes(x = fecha, y = y), color = "black") +
-  geom_line(data = df_pronostico, aes(x = fecha, y = y), color = "blue") +
-  geom_point(data = df_pronostico, aes(x = fecha, y = y), color = "blue") +
-  geom_ribbon(data = df_pronostico,
-              aes(x = fecha, ymin = lim_inf, ymax = lim_sup),
-              fill = "blue", alpha = 0.2) +
-  labs(title = paste("Pronostico final -", ganador_nombre),
-       subtitle = "Banda heuristica ±1.96 x sd(errores de origen movil)",
-       x = "Fecha", y = attr(serie_2, "unidad")) +
+ggplot(data.frame(fecha = serie_2$fecha[om2_1$objetivo], error = e2_1), aes(fecha, error)) +
+  geom_hline(yintercept = 0) + geom_line() + geom_point() +
+  labs(title = paste("Errores de origen movil a un paso:", ganador2_h1),
+       x = "Fecha", y = paste("Error (", attr(serie_2, "unidad"), ")"),
+       caption = paste0("n = ", length(e2_1), " errores, h = 1")) +
   theme_minimal()
 
-print(g_pronostico)
-print(df_pronostico)
+# ==== FIN CHUNK 9 ====
+
+# ==== CHUNK 10: ITEM 6(d) - Correlograma de los errores (banda con n = numero de errores) ====
+
+correlograma(data.frame(y = e2_1))$panel
+
+# ==== FIN CHUNK 10 ====
+
+# ==== CHUNK 11: ITEM 6(d) - t de media cero, Ljung-Box, Jarque-Bera y Durbin-Watson ====
+
+val2_1 <- validar_errores(e2_1)
+n_e2   <- length(e2_1); m_e2 <- min(floor(n_e2 / 4), 24)
+
+cat(sprintf("t media cero (%d gl): t = %.3f, critico = %.3f, p = %.3g\n",
+            n_e2 - 1, val2_1$t$obs, qt(0.975, n_e2 - 1), val2_1$t$p))
+cat(sprintf("Ljung-Box (m = %d, %d gl): Q = %.3f, critico = %.3f, p = %.3g\n",
+            m_e2, m_e2, val2_1$lb$obs, qchisq(0.95, m_e2), val2_1$lb$p))
+cat(sprintf("Jarque-Bera (2 gl): JB = %.3f, critico = %.3f, p = %.3g\n",
+            val2_1$jb$obs, qchisq(0.95, 2), val2_1$jb$p))
+cat(sprintf("Durbin-Watson: d = %.3f, r1 = %.3f, 2(1-r1) = %.3f\n",
+            val2_1$dw$d, val2_1$dw$r1, val2_1$dw$aprox_2_1_menos_r1))
+
+# ==== FIN CHUNK 11 ====
+
+# ==== CHUNK 12: ITEM 6(e) - Desviacion de errores de origen movil a cada horizonte h=1..H ====
+
+sd2_h <- vapply(1:H2, function(h) sd(origen_movil(y_s2, ajust2[[ganador2_h1]], n0_2, h)$error),
+                numeric(1))
+print(round(sd2_h, 3))
+
+# ==== FIN CHUNK 12 ====
+
+# ==== CHUNK 13: ITEM 6(e) - Ganador reajustado sobre toda la serie y H pronosticos ====
+# NOTA: serie_2 es diaria -> se usa by = "day" (serie_1 era mensual, usaba by = "month")
+
+pron2 <- ajust2[[ganador2_h1]](y_s2)$pronosticar(H2)
+fut2  <- seq(max(serie_2$fecha), by = "day", length.out = H2 + 1)[-1]
+
+df2_fc  <- data.frame(fecha = fut2, pron = pron2,
+                      inf = pron2 - 1.96 * sd2_h, sup = pron2 + 1.96 * sd2_h)
+df2_obs <- tail(data.frame(fecha = serie_2$fecha, y = y_s2), 30)   # ultimo tramo (ajustable)
+
+print(df2_fc)
+
+# Dejar en NA si no se cuenta con un valor de referencia regulatorio para esta variable.
+ # <- reemplazar por el valor correspondiente si aplica
+
+p_final <- ggplot() +
+  geom_line(data = df2_obs, aes(fecha, y)) +
+  geom_ribbon(data = df2_fc, aes(fecha, ymin = inf, ymax = sup), alpha = 0.25) +
+  geom_line(data = df2_fc, aes(fecha, pron), colour = "red") +
+  labs(title = paste("Serie 2: pronostico a", H2, "dias con", ganador2_h1),
+       x = "Fecha", y = attr(serie_2, "unidad"),
+       caption = "Banda heuristica: ±1.96 veces la desviacion de los errores de origen movil a cada horizonte; no es un intervalo de confianza.") +
+  theme_minimal()
+
+
+print(p_final)
+
+# ==== FIN CHUNK 13 ====

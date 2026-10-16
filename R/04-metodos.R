@@ -1,63 +1,15 @@
-# metodos de pronostico 
+# R/04-metodos.R  --  Equipo STJNKV
+# Paquetes permitidos: R base, dplyr, tidyr, purrr, tibble, readr, ggplot2, patchwork
+# Convencion: cada metodo devuelve list(yhat, pronosticar, parametros, ...)
+#   yhat[t] usa solo y[1:(t-1)]; calentamiento = NA
+# Ninguna funcion lee objetos globales.
 
-library(tidyverse)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(patchwork)
 
-
-
-
-# y = datos(serie ts)
-
-
-# ingenuo estacional
-
-
-# 1b. Ingenuo (random walk) -> Yhat_{t+1} = Y_t
-ajustar_ingenuo <- function(y) {
-  
-  # Validaciones
-  stopifnot(!anyNA(y), is.numeric(y), length(y) >= 2)
-  
-  T_obs <- length(y)
-  
-  fitted <- y
-  
-  # Residuos: y_t - fitted_{t-1} = y_t - y_{t-1}
-  residuo <- numeric(T_obs)
-  residuo[1] <- 0  
-  for (t in 2:T_obs) {
-    residuo[t] <- y[t] - fitted[t - 1]
-  }
-  
-  
-  yhat <- c(NA, fitted[-T_obs])   # yhat[t] = fitted[t-1] = y[t-1]
-  
-  
-  ultimo_valor <- fitted[T_obs]
-  pronosticar <- function(h) {
-    stopifnot(is.numeric(h), length(h) == 1, h >= 1)
-    rep(ultimo_valor, h)
-  }
-  
-  resul_ingenuo <- list(
-    metodo         = "Ingenuo",
-    yhat           = yhat,
-    pronosticar    = pronosticar,
-    parametros     = list(ultimo_valor = ultimo_valor),
-    Ajustados      = fitted,
-    residuales     = residuo,
-    Extra_muestral = ultimo_valor,
-    T_observado    = T_obs
-  )
-  
-  return(resul_ingenuo)
-}
-
-
-# 1 media simple
+# ---------------------------------------------------------------- 1. Media simple
 ajustar_media <- function(y) {
   
   # Validaciones
@@ -65,285 +17,237 @@ ajustar_media <- function(y) {
   
   T_obs <- length(y)
   
-  # Vector de valores ajustados (pronósticos un paso adelante)
-  fitted <- numeric(T_obs)  
-  
-  # Calentamiento: el primer pronóstico es Y1
+  fitted <- numeric(T_obs)
   fitted[1] <- y[1]
+  for (t in 2:T_obs) fitted[t] <- fitted[t - 1] + (1 / t) * (y[t] - fitted[t - 1])
+  # fitted[t] = media de y[1:t]
   
-  # Actualización recursiva:
-  for (t in 2:T_obs) {
-    fitted[t] <- fitted[t - 1] + (1 / t) * (y[t] - fitted[t - 1])
+  yhat <- c(NA_real_, fitted[-T_obs])          # yhat[t] = media de y[1:(t-1)]
+  media_final <- fitted[T_obs]
+  
+  
+  forecast_fn <- function(h) {
+    rep(media_final, h)
   }
   
-  # Residuos: y_t - fitted_{t-1} (error de prediccion un paso antes)
-  residuo <- numeric(T_obs)
-  residuo[1] <- 0  # sin error en t=1
-  for (t in 2:T_obs) {
-    residuo[t] <- y[t] - fitted[t - 1]
-  }
-  
-  # yhat: pronostico de Y_t hecho con info hasta t-1; calentamiento = NA
-  yhat    <- c(NA, fitted[-T_obs])   # yhat[t] = fitted[t-1]
-  
-  # pronosticar: devuelve vector de h pronosticos extramuestrales
-  media_final <- fitted[T_obs]       # Pronóstico extramuestral: media acumulada final
   pronosticar <- function(h) {
     stopifnot(is.numeric(h), length(h) == 1, h >= 1)
-    rep(media_final, h)              # igual para cualquier h
+    forecast_fn(h)
   }
   
-  # Resultado como lista
-  resul_ajust_med <- list(
+  list(
     metodo         = "Media simple",
-    yhat           = yhat,                          
-    pronosticar    = pronosticar,                   
-    parametros     = list(media_final = media_final), 
-    Ajustados      = fitted,
-    residuales     = residuo,
-    Extra_muestral = media_final,
+    yhat           = yhat,
+    pronosticar    = pronosticar,
+    parametros     = list(media_final = media_final),
+    ajustados      = fitted,
+    residuales     = y - yhat,
+    Extra_muestral = forecast_fn,
     T_observado    = T_obs
   )
-  
-  return(resul_ajust_med)
 }
 
-
-
-# 2 media movil MM
-ajustar_mm <- function(y, k) { 
+# ---------------------------------------------------------------- 2. Ingenuo
+ajustar_ingenuo <- function(y) {
   
   # Validaciones
   stopifnot(!anyNA(y), is.numeric(y), length(y) >= 2)
-  stopifnot(is.numeric(k), length(k) == 1, k >= 2, k < length(y))
   
   T_obs <- length(y)
+  yhat  <- c(NA_real_, y[-T_obs])
   
-  if (k <= 1) stop("k debe ser mayor a 2")
-  
-  # valores ajustados y residuos
-  fitted   <- rep(NA, T_obs) # rep(NA, )hace que se rellenen los faltantes con NA
-  residuos <- rep(NA, T_obs)
-  
-  # Calentamiento: k periodos, no hay pronostico hasta t = k+1
-  # A partir de t = k+1, el pronostico es el promedio de las k obs anteriores
-  for (j in (k + 1):T_obs) {
-    fitted[j]   <- mean(y[(j - k):(j - 1)])   # promedio de las k obs previas
-    residuos[j] <- y[j] - fitted[j]            # error de prediccion
+  # Pronostico extramuestral: se mantiene el ultimo valor observado
+  # para cualquier horizonte h (misma logica de la funcion original)
+  ultimo_valor <- y[T_obs]
+  forecast_fn <- function(h) {
+    rep(ultimo_valor, h)
   }
   
-  # Pronostico extramuestral: promedio de las ultimas k observaciones
-  Extra_muesMM <- mean(y[(T_obs - k + 1):T_obs])
-  
-  # yhat: pronostico de Y_t hecho con info hasta t-1; calentamiento = NA
-  yhat <- fitted                                 # ya tiene NA en calentamiento
-  
-  # pronosticar: devuelve vector de h pronosticos extramuestrales
   pronosticar <- function(h) {
     stopifnot(is.numeric(h), length(h) == 1, h >= 1)
-    rep(Extra_muesMM, h)                         # igual para cualquier h
+    forecast_fn(h)
   }
   
-  # Resultado
-  Resul_MM <- list(
-    metodo         = paste("Media movil k =", k),
-    yhat           = yhat,                        # nuevo
-    pronosticar    = pronosticar,                 # nuevo
-    parametros     = list(k = k,                  # nuevo
-                          MM_final = Extra_muesMM),
-    k              = k,
-    Ajustados      = fitted,
-    residuales     = residuos,
-    Extra_muestral = Extra_muesMM,
-    T_observados   = T_obs
+  list(
+    metodo         = "Ingenuo",
+    yhat           = yhat,
+    pronosticar    = pronosticar,
+    parametros     = list(),
+    residuales     = y - yhat,
+    Extra_muestral = forecast_fn,
+    T_observado    = T_obs
   )
-  
-  return(Resul_MM)
 }
 
-
-
-# 3 SES suavizamiento exponencial
-ajustar_ses <- function(y, alpha) {
+# ---------------------------------------------------------------- 2a. Ingenuo estacional
+ajustar_ingenuo_estacional <- function(y, s) {
   
   # Validaciones
   stopifnot(!anyNA(y), is.numeric(y), length(y) >= 2)
-  stopifnot(is.numeric(alpha), length(alpha) == 1, alpha > 0, alpha < 1)
+  stopifnot(is.numeric(s), length(s) == 1, s >= 2, length(y) > s)
   
   T_obs <- length(y)
   
-  # Validacion de alpha
-  if (alpha <= 0 | alpha >= 1) stop("alpha debe estar entre 0 y 1")
-  
-  # Vectores de fitted y residuos
-  fitted    <- numeric(T_obs)
-  residuals <- numeric(T_obs)
-  
-  # Calentamiento: fitted[1] = Yhat_2 = Y_1
-  fitted[1]    <- y[1]
-  residuals[1] <- 0
-  
-  # Correccion de error: fitted[t] = Yhat_{t+1} = Yhat_t + alpha * e_t
-  for (t in 2:T_obs) {
-    e_t           <- y[t] - fitted[t - 1]        # error en t (Y_t - Yhat_t)
-    fitted[t]     <- fitted[t - 1] + alpha * e_t # correccion de error -> Yhat_{t+1}
-    residuals[t]  <- e_t
+  fitted <- rep(NA_real_, T_obs)
+  for (t in (s + 1):T_obs) {
+    fitted[t] <- y[t - s]
   }
   
-  # Verificacion: Promedio ponderado (debe ser identico a 'fitted')
-  # CORREGIDO: se usa y[t] (no y[t-1]) para eliminar el desfase de indice
-  fitted_pp    <- numeric(T_obs)
-  fitted_pp[1] <- y[1]
+  residuo <- y - fitted   # NA en calentamiento (t = 1..s)
   
-  for (t in 2:T_obs) {
-    fitted_pp[t] <- alpha * y[t] + (1 - alpha) * fitted_pp[t - 1]
-  }
-  
-  # Comprobacion numerica de que ambas formas coinciden
-  coinciden <- all(abs(fitted - fitted_pp) < 1e-10)
-  
-  # CORREGIDO: fitted[T_obs] ya es Yhat_{T_obs+1}; no se vuelve a aplicar la correccion
-  forecast_value <- fitted[T_obs]
-  
-  diferencia <- mean(fitted) - mean(fitted_pp)
-  
-  # yhat: pronostico de Y_t hecho con info hasta t-1; calentamiento = NA
-  yhat <- c(NA, fitted[-T_obs])                  # yhat[t] = fitted[t-1] = Yhat_t
-  
-  # pronosticar: devuelve vector de h pronosticos extramuestrales
-  pronosticar <- function(h) {
-    stopifnot(is.numeric(h), length(h) == 1, h >= 1)
-    rep(forecast_value, h)                        # igual para cualquier h
-  }
-  
-  # Resultado
-  Resultado_SES <- list(
-    metodo              = paste("SES alpha =", alpha),
-    yhat                = yhat,
-    pronosticar         = pronosticar,
-    parametros          = list(alpha = alpha,
-                               nivel_final = fitted[T_obs]),
-    alpha               = alpha,
-    Ajustados           = fitted,
-    Ajustados_ponderado = fitted_pp,
-    diferencia_         = diferencia,
-    residuales          = residuals,
-    Extra_muestral      = forecast_value,
-    formas_coinciden    = coinciden,
-    T_observados        = T_obs
-  )
-  
-  return(Resultado_SES)
-}
-
-
-
-# 4 doble media movil
-ajustar_dmm <- function(y, k) {
-  
-  # Validaciones
-  stopifnot(!anyNA(y), is.numeric(y), length(y) >= 2)
-  stopifnot(is.numeric(k), length(k) == 1, k >= 2, length(y) >= 2*k - 1)
-  
-  T_obs <- length(y)
-  
-  # CORREGIDO: se permite k = 2 (antes bloqueaba con k <= 2)
-  if (k <= 1) stop("k debe ser mayor o igual a 2")
-  
-  MM    <- rep(NA, T_obs)   # media movil simple
-  DMM   <- rep(NA, T_obs)   # doble media movil
-  E_hat <- rep(NA, T_obs)   # nivel estimado
-  b_hat <- rep(NA, T_obs)   # pendiente estimada
-  fitted   <- rep(NA, T_obs)
-  residuos <- rep(NA, T_obs)
-  
-  # CORREGIDO: un solo recorrido.
-  # MM se calcula desde t = k (antes solo desde 2k-1, dejando NA ocultos
-  # que usaba DMM). DMM/E_hat/b_hat desde t = 2k-1, y el primer pronostico
-  # (fitted) queda en t = 2k, es decir Yhat_{2k}.
-  for (t in k:T_obs) {
-    
-    MM[t] <- mean(y[(t - k + 1):t])
-    
-    if (t >= 2*k - 1) {
-      DMM[t]   <- mean(MM[(t - k + 1):t])
-      E_hat[t] <- 2 * MM[t] - DMM[t]
-      b_hat[t] <- (2 / (k - 1)) * (MM[t] - DMM[t])
-      
-      if (t > 2*k - 1) {
-        fitted[t]   <- E_hat[t - 1] + b_hat[t - 1] * 1
-        residuos[t] <- y[t] - fitted[t]
-      }
-    }
-  }
-  
-  # yhat: pronostico de Y_t hecho con info hasta t-1; calentamiento = NA
+  # yhat: fitted[t] ya es Yhat_t (info disponible hasta t-1 pues s >= 1)
   yhat <- fitted
   
-  # Pronostico extramuestral
-  forecast_fn <- function(h) E_hat[T_obs] + b_hat[T_obs] * h
+  # Pronostico extramuestral: repite el ultimo ciclo observado
+  forecast_fn <- function(h) {
+    m   <- ((h - 1) %% s) + 1
+    idx <- T_obs - s + m
+    y[idx]
+  }
   
-  # pronosticar: devuelve vector de h pronosticos extramuestrales
   pronosticar <- function(h) {
     stopifnot(is.numeric(h), length(h) == 1, h >= 1)
     forecast_fn(1:h)
   }
   
   list(
-    metodo      = paste("Doble media movil k =", k),
-    yhat        = yhat,
-    pronosticar = pronosticar,
-    parametros  = list(k      = k,
-                       E_final = E_hat[T_obs],
-                       b_final = b_hat[T_obs]),
-    k           = k,
-    MM          = MM,
-    DMM         = DMM,
-    E_hat       = E_hat,
-    b_hat       = b_hat,
-    Ajustados   = fitted,
-    residuales  = residuos,
+    metodo         = paste("Ingenuo estacional s =", s),
+    yhat           = yhat,
+    pronosticar    = pronosticar,
+    parametros     = list(s = s),
+    s              = s,
+    Ajustados      = fitted,
+    residuales     = residuo,
     Extra_muestral = forecast_fn,
-    T_observados = T_obs
+    T_observado    = T_obs
   )
 }
 
 
-
-# 5 regresion lineal, 6 tendencia cuadratica, 7 tendencia exponencial
-ajustar_tendencia <- function(y, tipo = c("lineal", "cuadratica", "exponencial"),
-                              corregir_sesgo = FALSE) {
+# ---------------------------------------------------------------- 3. Media movil
+ajustar_mm <- function(y, k) {
+  stopifnot(!anyNA(y), is.numeric(y), length(y) >= 3)
+  stopifnot(is.numeric(k), length(k) == 1, k >= 2, k < length(y))
+  T_obs <- length(y)
   
-  # Validaciones
+  yhat <- rep(NA_real_, T_obs)
+  for (j in (k + 1):T_obs) yhat[j] <- mean(y[(j - k):(j - 1)])
+  
+  mm_final <- mean(y[(T_obs - k + 1):T_obs])
+  
+  list(
+    metodo      = paste("Media movil k =", k),
+    yhat        = yhat,
+    pronosticar = function(h) {
+      stopifnot(is.numeric(h), length(h) == 1, h >= 1)
+      rep(mm_final, h)
+    },
+    parametros  = list(k = k, MM_final = mm_final),
+    residuales  = y - yhat,
+    T_observado = T_obs
+  )
+}
+
+# ---------------------------------------------------------------- 4. SES
+ajustar_ses <- function(y, alpha) {
+  stopifnot(!anyNA(y), is.numeric(y), length(y) >= 2)
+  stopifnot(is.numeric(alpha), length(alpha) == 1, alpha > 0, alpha < 1)
+  T_obs <- length(y)
+  
+  # fitted[t] = nivel L_t (despues de ver y_t) = pronostico de y_{t+1}
+  fitted <- numeric(T_obs)
+  fitted[1] <- y[1]
+  for (t in 2:T_obs) {
+    e_t       <- y[t] - fitted[t - 1]
+    fitted[t] <- fitted[t - 1] + alpha * e_t          # correccion de error
+  }
+  
+  # Verificacion: forma de promedio ponderado L_t = a*y_t + (1-a)*L_{t-1}
+  fitted_pp <- numeric(T_obs)
+  fitted_pp[1] <- y[1]
+  for (t in 2:T_obs) fitted_pp[t] <- alpha * y[t] + (1 - alpha) * fitted_pp[t - 1]
+  coinciden <- all(abs(fitted - fitted_pp) < 1e-10)
+  
+  yhat <- c(NA_real_, fitted[-T_obs])                 # yhat[t] = L_{t-1}
+  nivel_final <- fitted[T_obs]                        # pronostico de y_{T+h}
+  
+  list(
+    metodo           = paste("SES alpha =", alpha),
+    yhat             = yhat,
+    pronosticar      = function(h) {
+      stopifnot(is.numeric(h), length(h) == 1, h >= 1)
+      rep(nivel_final, h)
+    },
+    parametros       = list(alpha = alpha, nivel_final = nivel_final),
+    ajustados        = fitted,
+    residuales       = y - yhat,
+    formas_coinciden = coinciden,
+    T_observado      = T_obs
+  )
+}
+
+# ---------------------------------------------------------------- 5. Doble media movil
+ajustar_dmm <- function(y, k) {
+  stopifnot(!anyNA(y), is.numeric(y), length(y) >= 2)
+  stopifnot(is.numeric(k), length(k) == 1, k >= 2, length(y) >= 2 * k)
+  T_obs <- length(y)
+  
+  MM    <- rep(NA_real_, T_obs)
+  DMM   <- rep(NA_real_, T_obs)
+  E_hat <- rep(NA_real_, T_obs)
+  b_hat <- rep(NA_real_, T_obs)
+  yhat  <- rep(NA_real_, T_obs)
+  
+  for (t in k:T_obs) MM[t] <- mean(y[(t - k + 1):t])
+  for (t in (2 * k - 1):T_obs) {
+    DMM[t]   <- mean(MM[(t - k + 1):t])
+    E_hat[t] <- 2 * MM[t] - DMM[t]
+    b_hat[t] <- (2 / (k - 1)) * (MM[t] - DMM[t])
+  }
+  for (t in (2 * k):T_obs) yhat[t] <- E_hat[t - 1] + b_hat[t - 1]
+  
+  list(
+    metodo      = paste("Doble media movil k =", k),
+    yhat        = yhat,
+    pronosticar = function(h) {
+      stopifnot(is.numeric(h), length(h) == 1, h >= 1)
+      E_hat[T_obs] + b_hat[T_obs] * seq_len(h)
+    },
+    parametros  = list(k = k, E_final = E_hat[T_obs], b_final = b_hat[T_obs]),
+    MM = MM, DMM = DMM, E_hat = E_hat, b_hat = b_hat,
+    residuales  = y - yhat,
+    T_observado = T_obs
+  )
+}
+
+# ---------------------------------------------------------------- 6. Tendencias (MCO a mano)
+# calcular_yhat = TRUE : yhat de un paso (reajusta con y[1:(t-1)]) y tabla de coeficientes.
+# calcular_yhat = FALSE: solo ajusta y pronostica (rapido, para el origen movil).
+ajustar_tendencia <- function(y, tipo = c("lineal", "cuadratica", "exponencial"),
+                              corregir_sesgo = FALSE, verbose = FALSE,
+                              calcular_yhat = TRUE) {
+  
   stopifnot(!anyNA(y), is.numeric(y), length(y) >= 3)
   
   tipo   <- match.arg(tipo)
   T_obs  <- length(y)
   t_vect <- seq_len(T_obs)
   
-  Tabla_modelo <- function(modelo, beta = NULL, residuos = NULL, nombres_coef = NULL) {
-    if (is.list(modelo)) {
-      X            <- modelo$X
-      beta         <- modelo$beta
-      residuos     <- modelo$residuos
-      nombres_coef <- modelo$nombres_coef
-    } else {
-      X <- modelo
-    }
-    
-    beta     <- as.vector(beta)
-    residuos <- as.vector(residuos)
+  Tabla_modelo <- function(modelo) {
+    X            <- modelo$X
+    beta         <- as.vector(modelo$beta)
+    residuos     <- as.vector(modelo$residuos)
+    nombres_coef <- modelo$nombres_coef
     
     n <- nrow(X)
     k <- ncol(X)
     
-    # barlett
+    # Varianza robusta con nucleo de Bartlett (Newey-West)
     lag    <- floor(4 * (n / 100)^(2 / 9))
     sigma2 <- sum(residuos^2) / (n - k)
     
     Xe <- X * residuos
     S  <- crossprod(Xe)
-    
     for (l in seq_len(lag)) {
       if (l >= n) break
       w       <- 1 - l / (lag + 1)
@@ -365,8 +269,7 @@ ajustar_tendencia <- function(y, tipo = c("lineal", "cuadratica", "exponencial")
     ss_tot  <- sum((y_usado - mean(y_usado))^2)
     ss_res  <- sum(residuos^2)
     r2      <- 1 - ss_res / ss_tot
-    
-    dw <- sum(diff(residuos)^2) / ss_res
+    dw      <- sum(diff(residuos)^2) / ss_res
     
     tabla <- dplyr::tibble(
       coeficiente   = nombres_coef,
@@ -376,288 +279,380 @@ ajustar_tendencia <- function(y, tipo = c("lineal", "cuadratica", "exponencial")
       t_estadistico = t_stat,
       p_valor       = p_val
     )
-    
     list(tabla = tabla, r2 = r2, sigma2 = sigma2, dw = dw)
   }
   
-  # Tendencia Lineal
   if (tipo == "lineal") {
-    # matriz lineal
-    X_lineal    <- cbind(1, t_vect)
-    beta_lineal <- solve(crossprod(X_lineal), crossprod(X_lineal, y))
-    beta_lineal <- as.vector(beta_lineal)
-    
-    # valores ajustados y residuos
-    ajustados_Li <- as.vector(X_lineal %*% beta_lineal)
-    residuo_lin  <- y - ajustados_Li
-    
-    resul <- list(
-      X            = X_lineal,
-      beta         = beta_lineal,
-      residuos     = residuo_lin,
-      nombres_coef = c("beta0", "beta1")
-    )
-    
-    fitted   <- ajustados_Li
-    residuos <- residuo_lin
-    
-    # pronosticar: devuelve vector de h pronosticos extramuestrales
+    X    <- cbind(1, t_vect)
+    beta <- as.vector(solve(crossprod(X), crossprod(X, y)))
+    ajustados <- as.vector(X %*% beta)
+    residuos  <- y - ajustados
+    resul <- list(X = X, beta = beta, residuos = residuos,
+                  nombres_coef = c("beta0", "beta1"))
     pronosticar <- function(h) {
       stopifnot(is.numeric(h), length(h) == 1, h >= 1)
-      t_fut <- (T_obs + 1):(T_obs + h)           # tiempos futuros
-      beta_lineal[1] + beta_lineal[2] * t_fut
+      t_fut <- (T_obs + 1):(T_obs + h)
+      beta[1] + beta[2] * t_fut
     }
-    
-    parametros <- list(beta0 = beta_lineal[1], beta1 = beta_lineal[2])
+    parametros <- list(beta0 = beta[1], beta1 = beta[2])
   }
   
-  # Tendencia Cuadrática
   if (tipo == "cuadratica") {
-    # matriz cuadratica
-    X_cuadra  <- cbind(1, t_vect, t_vect^2) # toma secuencia y combina
-    beta_cuad <- solve(crossprod(X_cuadra), crossprod(X_cuadra, y))
-    beta_cuad <- as.vector(beta_cuad)
-    
-    ajustados_cua <- as.vector(X_cuadra %*% beta_cuad)
-    residuo_cua   <- y - ajustados_cua
-    
-    resul <- list(
-      X            = X_cuadra,
-      beta         = beta_cuad,
-      residuos     = residuo_cua,
-      nombres_coef = c("beta0", "beta1", "beta2")
-    )
-    
-    fitted   <- ajustados_cua
-    residuos <- residuo_cua
-    
-    # pronosticar: devuelve vector de h pronosticos extramuestrales
+    X    <- cbind(1, t_vect, t_vect^2)
+    beta <- as.vector(solve(crossprod(X), crossprod(X, y)))
+    ajustados <- as.vector(X %*% beta)
+    residuos  <- y - ajustados
+    resul <- list(X = X, beta = beta, residuos = residuos,
+                  nombres_coef = c("beta0", "beta1", "beta2"))
     pronosticar <- function(h) {
       stopifnot(is.numeric(h), length(h) == 1, h >= 1)
-      t_fut <- (T_obs + 1):(T_obs + h)           # tiempos futuros
-      beta_cuad[1] + beta_cuad[2] * t_fut + beta_cuad[3] * t_fut^2
+      t_fut <- (T_obs + 1):(T_obs + h)
+      beta[1] + beta[2] * t_fut + beta[3] * t_fut^2
     }
-    
-    parametros <- list(beta0 = beta_cuad[1], beta1 = beta_cuad[2],
-                       beta2 = beta_cuad[3])
+    parametros <- list(beta0 = beta[1], beta1 = beta[2], beta2 = beta[3])
   }
   
-  # Tendencia Exponencial
   if (tipo == "exponencial") {
     if (any(y <= 0)) stop("Hay valores negativos o ceros en la serie")
+    trans_y <- log(y)
+    X       <- cbind(1, t_vect)
+    beta_ln <- as.vector(solve(crossprod(X), crossprod(X, trans_y)))
     
-    #  matriz para exponencial
-    trans_y <- log(y)           # transformacion de los datos
-    X_exp   <- cbind(1, t_vect)
-    beta_ln <- solve(crossprod(X_exp), crossprod(X_exp, trans_y)) 
-    beta_ln <- as.vector(beta_ln)
-    
-    residuos_trans <- trans_y - as.vector(X_exp %*% beta_ln)
+    residuos_trans <- trans_y - as.vector(X %*% beta_ln)
     sigma2_trans   <- sum(residuos_trans^2) / (T_obs - 2)
     
-    # parametros llevados a escala
-    beta_0or <- exp(beta_ln[1])
-    beta_1or <- exp(beta_ln[2])
-    
-    # respuesta de corregir de sesgo
+    beta_0or   <- exp(beta_ln[1])
+    beta_1or   <- exp(beta_ln[2])
     fact_sesgo <- if (corregir_sesgo) exp(sigma2_trans / 2) else 1
     
-    ajustados_exp <- beta_0or * beta_1or^t_vect * fact_sesgo   
-    residuos_exp  <- y - ajustados_exp
-    
-    resul <- list(
-      X            = X_exp,
-      beta         = beta_ln,
-      residuos     = residuos_trans,
-      nombres_coef = c("beta0", "beta1")
-    )
-    
-    fitted   <- ajustados_exp
-    residuos <- residuos_exp
-    
-    # pronosticar: devuelve vector de h pronosticos extramuestrales
+    ajustados <- beta_0or * beta_1or^t_vect * fact_sesgo
+    residuos  <- y - ajustados
+    # La tabla de coeficientes de la exponencial esta en escala log
+    resul <- list(X = X, beta = beta_ln, residuos = residuos_trans,
+                  nombres_coef = c("beta0 (log)", "beta1 (log)"))
     pronosticar <- function(h) {
       stopifnot(is.numeric(h), length(h) == 1, h >= 1)
-      t_fut <- (T_obs + 1):(T_obs + h)           # tiempos futuros
+      t_fut <- (T_obs + 1):(T_obs + h)
       beta_0or * beta_1or^t_fut * fact_sesgo
     }
-    
     parametros <- list(beta0_ln = beta_ln[1], beta1_ln = beta_ln[2],
                        beta0_or = beta_0or,   beta1_or = beta_1or)
   }
   
-  # Mostrar en consola
-  res <- Tabla_modelo(resul)
+  res <- NULL
+  if (calcular_yhat || verbose) res <- Tabla_modelo(resul)
+  if (verbose) {
+    print(res$tabla, digits = 4)
+    cat(sprintf("\nR2 = %.6f\nsigma2 = %.6f\nDurbin-Watson = %.4f\n",
+                res$r2, res$sigma2, res$dw))
+  }
   
-  print(res$tabla, digits = 4)
-  cat(sprintf("\nR²            = %.6f", res$r2))
-  cat(sprintf("\nσ²            = %.6f", res$sigma2))
-  cat(sprintf("\nDurbin-Watson = %.4f\n", res$dw))
-  
-  # yhat: pronostico de Y_t hecho con info hasta t-1; para tendencia = ajustados
-  yhat <- fitted                                  # regresion usa toda la muestra
+  # yhat de un paso: yhat[t] reajusta con y[1:(t-1)]
+  yhat <- rep(NA_real_, T_obs)
+  if (calcular_yhat) {
+    p <- ncol(resul$X)
+    for (t in (p + 2):T_obs) {
+      yhat[t] <- ajustar_tendencia(y[1:(t - 1)], tipo, corregir_sesgo,
+                                   verbose = FALSE,
+                                   calcular_yhat = FALSE)$pronosticar(1)[1]
+    }
+  }
   
   invisible(list(
     tipo        = tipo,
-    yhat        = yhat,                           
-    pronosticar = pronosticar,                    
-    parametros  = parametros,                     
-    ajustados   = fitted,     
-    residuales  = residuos,   
-    tabla       = res$tabla,
-    r2          = res$r2,
-    sigma2      = res$sigma2,
-    dw          = res$dw
+    yhat        = yhat,
+    pronosticar = pronosticar,
+    parametros  = parametros,
+    ajustados   = ajustados,   # ajuste dentro de muestra (para 6b)
+    residuales  = residuos,    # residuos del ajuste (para 6b)
+    tabla       = if (is.null(res)) NULL else res$tabla,
+    r2          = if (is.null(res)) NA_real_ else res$r2,
+    sigma2      = if (is.null(res)) NA_real_ else res$sigma2,
+    dw          = if (is.null(res)) NA_real_ else res$dw
   ))
+}
+
+# ---------------------------------------------------------------- 7  Tendencias con estacional
+
+ajustar_tendencia_estacional <- function(y, s) {
+  
+  # Validaciones
+  stopifnot(!anyNA(y), is.numeric(y), length(y) >= 2)
+  stopifnot(is.numeric(s), length(s) == 1, s >= 2, length(y) >= s + 2)
+  
+  T_obs  <- length(y)
+  t_vect <- seq_len(T_obs)
+  
+  # estacion de cada observacion: 1,2,...,s,1,2,...,s,...
+  estacion <- ((t_vect - 1) %% s) + 1
+  
+  # matriz de dummies de suma cero (s-1 columnas):
+  # D_i,t = 1 si estacion(t) = i ; -1 si estacion(t) = s ; 0 en otro caso
+  D <- matrix(0, nrow = T_obs, ncol = s - 1)
+  for (i in seq_len(s - 1)) {
+    D[estacion == i, i] <- 1
+    D[estacion == s, i] <- -1
+  }
+  
+  X    <- cbind(1, t_vect, D)
+  beta <- solve(crossprod(X), crossprod(X, y))
+  beta <- as.vector(beta)
+  
+  fitted  <- as.vector(X %*% beta)
+  residuo <- y - fitted
+  
+  beta0 <- beta[1]
+  beta1 <- beta[2]
+  delta <- beta[3:(s + 1)]            # delta_1,...,delta_{s-1}
+  delta_s <- -sum(delta)              # restriccion de suma cero
+  efectos_estacionales <- c(delta, delta_s)
+  names(efectos_estacionales) <- paste0("estacion_", seq_len(s))
+  
+  # yhat: regresion usa toda la muestra (sin calentamiento)
+  yhat <- fitted
+  
+  # pronosticar: proyecta tendencia + efecto estacional correspondiente
+  pronosticar <- function(h) {
+    stopifnot(is.numeric(h), length(h) == 1, h >= 1)
+    t_fut        <- (T_obs + 1):(T_obs + h)
+    estacion_fut <- ((t_fut - 1) %% s) + 1
+    efecto_fut   <- efectos_estacionales[estacion_fut]
+    beta0 + beta1 * t_fut + efecto_fut
+  }
+  
+  list(
+    metodo      = paste("Tendencia con ficticias suma cero, s =", s),
+    yhat        = yhat,
+    pronosticar = pronosticar,
+    parametros  = list(beta0 = beta0, beta1 = beta1,
+                       efectos_estacionales = efectos_estacionales),
+    s           = s,
+    Ajustados   = fitted,
+    residuales  = residuo,
+    T_observado = T_obs
+  )
 }
 
 
 
-# 8 Holt-winters aditivo (lineal)
+# ---------------------------------------------------------------- 8. Holt
 ajustar_holt <- function(y, alpha, beta) {
-  
-  # Validaciones
-  stopifnot(!anyNA(y), is.numeric(y), length(y) >= 2)
+  stopifnot(!anyNA(y), is.numeric(y), length(y) >= 3)
   stopifnot(is.numeric(alpha), length(alpha) == 1, alpha > 0, alpha < 1)
   stopifnot(is.numeric(beta),  length(beta)  == 1, beta  > 0, beta  < 1)
-  
   T_obs <- length(y)
   
-  # Validaciones
-  if (alpha <= 0 | alpha >= 1) stop("alpha debe estar entre 0 y 1")
-  if (beta  <= 0 | beta  >= 1) stop("beta debe estar entre 0 y 1")
-  
-  # Vectores para trayectorias
   L      <- numeric(T_obs)   # nivel
-  Tend   <- numeric(T_obs)   # pendiente (T_hat)
-  fitted <- numeric(T_obs)   # fitted[t] = Yhat_t (pronostico a un paso para t)
+  Tend   <- numeric(T_obs)   # pendiente
+  fitted <- rep(NA_real_, T_obs)   # fitted[t] = pronostico de y_t con info hasta t-1
   
-  # Calentamiento
-  L[1]      <- y[1]
-  Tend[1]   <- 0
-  fitted[1] <- y[1]   # inicializacion, no es un pronostico real
-  
-  for (t in 2:T_obs) {
-    Yhat_t    <- L[t-1] + Tend[t-1]                          # pronostico para t
-    fitted[t] <- Yhat_t
-    L[t]      <- alpha * y[t] + (1 - alpha) * Yhat_t         # nivel
-    Tend[t]   <- beta * (L[t] - L[t-1]) + (1 - beta) * Tend[t-1]  # pendiente
-  }
-  
-  residuals <- y - fitted
-  
-  # Correccion de error
-  L2    <- numeric(T_obs)
-  Tend2 <- numeric(T_obs)
-  
-  L2[1]    <- y[1]
-  Tend2[1] <- 0
+  # Inicializacion: L1 = y1, T1 = 0
+  L[1]    <- y[1]
+  Tend[1] <- 0
   
   for (t in 2:T_obs) {
-    e_t      <- y[t] - (L2[t-1] + Tend2[t-1])
-    L2[t]    <- L2[t-1] + Tend2[t-1] + alpha * e_t
-    Tend2[t] <- Tend2[t-1] + alpha * beta * e_t
+    fitted[t] <- L[t - 1] + Tend[t - 1]
+    L[t]      <- alpha * y[t] + (1 - alpha) * fitted[t]
+    Tend[t]   <- beta * (L[t] - L[t - 1]) + (1 - beta) * Tend[t - 1]
   }
   
-  # Verificacion numerica: ambas formas deben coincidir
+  # Verificacion: forma de correccion de error
+  L2 <- numeric(T_obs); Tend2 <- numeric(T_obs)
+  L2[1] <- y[1]; Tend2[1] <- 0
+  for (t in 2:T_obs) {
+    e_t      <- y[t] - (L2[t - 1] + Tend2[t - 1])
+    L2[t]    <- L2[t - 1] + Tend2[t - 1] + alpha * e_t
+    Tend2[t] <- Tend2[t - 1] + alpha * beta * e_t
+  }
   coinciden_L    <- all(abs(L - L2)       < 1e-10)
   coinciden_Tend <- all(abs(Tend - Tend2) < 1e-10)
   
-  # Pronostico extramuestral: Y_{T+h} = L_T + T_T * h
-  forecast_fn <- function(h) L[T_obs] + Tend[T_obs] * h
+  yhat <- fitted   # ya es el pronostico de un paso de y_t; yhat[1] = NA
   
-  # CORREGIDO: fitted[t] ya es Yhat_t (pronostico con info hasta t-1);
-  # yhat es 'fitted' con NA solo en t=1 (inicializacion), sin desfase adicional.
+  list(
+    metodo      = paste("Holt alpha =", alpha, "beta =", beta),
+    yhat        = yhat,
+    pronosticar = function(h) {
+      stopifnot(is.numeric(h), length(h) == 1, h >= 1)
+      L[T_obs] + Tend[T_obs] * seq_len(h)
+    },
+    parametros  = list(alpha = alpha, beta = beta,
+                       L_final = L[T_obs], T_final = Tend[T_obs]),
+    L = L, Tend = Tend,
+    residuales  = y - yhat,
+    coinciden_L = coinciden_L, coinciden_Tend = coinciden_Tend,
+    T_observado = T_obs
+  )
+}
+
+
+# ---------------------------------------------------------------- 9. Holt aditivo
+
+ajustar_hw <- function(y, s, alpha, beta, gamma) {
+  
+  # Validaciones
+  stopifnot(!anyNA(y), is.numeric(y))
+  stopifnot(is.numeric(s), length(s) == 1, s >= 2, length(y) >= 2 * s)
+  stopifnot(is.numeric(alpha), length(alpha) == 1, alpha > 0, alpha < 1)
+  stopifnot(is.numeric(beta),  length(beta)  == 1, beta  > 0, beta  < 1)
+  stopifnot(is.numeric(gamma), length(gamma) == 1, gamma > 0, gamma < 1)
+  
+  T_obs <- length(y)
+  
+  L      <- rep(NA_real_, T_obs)
+  Tr     <- rep(NA_real_, T_obs)
+  S      <- rep(NA_real_, T_obs)
+  fitted <- rep(NA_real_, T_obs)
+  
+  # Inicializacion clasica con los dos primeros ciclos
+  L[s]  <- mean(y[1:s])
+  Tr[s] <- (mean(y[(s + 1):(2 * s)]) - mean(y[1:s])) / s
+  S[1:s] <- y[1:s] - L[s]
+  S[1:s] <- S[1:s] - mean(S[1:s])     # garantiza suma cero
+  
+  # Recursion a partir de t = s+1
+  for (t in (s + 1):T_obs) {
+    Yhat_t    <- L[t - 1] + Tr[t - 1] + S[t - s]
+    fitted[t] <- Yhat_t
+    L[t]      <- alpha * (y[t] - S[t - s]) + (1 - alpha) * (L[t - 1] + Tr[t - 1])
+    Tr[t]     <- beta  * (L[t] - L[t - 1]) + (1 - beta) * Tr[t - 1]
+    S[t]      <- gamma * (y[t] - L[t]) + (1 - gamma) * S[t - s]
+  }
+  
+  residuales <- y - fitted
+  
+  # Pronostico extramuestral: se repite el patron estacional cada s pasos
+  forecast_fn <- function(h) {
+    m   <- ((h - 1) %% s) + 1
+    idx <- T_obs - s + m
+    L[T_obs] + Tr[T_obs] * h + S[idx]
+  }
+  
+  # yhat: fitted[t] ya es Yhat_t (NA en calentamiento, t = 1..s)
   yhat <- fitted
-  yhat[1] <- NA
   
-  # pronosticar: devuelve vector de h pronosticos extramuestrales
   pronosticar <- function(h) {
     stopifnot(is.numeric(h), length(h) == 1, h >= 1)
     forecast_fn(1:h)
   }
   
   list(
-    metodo          = paste("parametros alpha =", alpha, "beta =", beta),
-    yhat            = yhat,
-    pronosticar     = pronosticar,
-    parametros      = list(alpha   = alpha,
-                           beta    = beta,
-                           L_final = L[T_obs],
-                           T_final = Tend[T_obs]),
-    alpha           = alpha,
-    beta            = beta,
-    L               = L,
-    Tend            = Tend,
-    ajustados       = fitted,
-    residuales      = residuals,
-    Extra_muestral  = forecast_fn,
-    coinciden_L     = coinciden_L,
-    coinciden_Tend  = coinciden_Tend,
-    T_observaciones = T_obs
+    metodo         = paste("Holt-Winters aditivo s =", s,
+                           "alpha =", alpha, "beta =", beta, "gamma =", gamma),
+    yhat           = yhat,
+    pronosticar    = pronosticar,
+    parametros     = list(alpha = alpha, beta = beta, gamma = gamma,
+                          L_final = L[T_obs], T_final = Tr[T_obs],
+                          S_final = S[(T_obs - s + 1):T_obs]),
+    s              = s,
+    alpha          = alpha,
+    beta           = beta,
+    gamma          = gamma,
+    L              = L,
+    Tr             = Tr,
+    S              = S,
+    Ajustados      = fitted,
+    residuales     = residuales,
+    Extra_muestral = forecast_fn,
+    T_observado    = T_obs
   )
 }
 
-# calculo de errores
-# MSE  <- mean(modelo$residuales^2,            na.rm = TRUE)
-# MAE  <- mean(abs(modelo$residuales),          na.rm = TRUE)
-# MAPE <- mean(abs(modelo$residuales / y)*100,  na.rm = TRUE)
 
+# ---------------------------------------------------------------- 10. Holt multiplicativo
 
-
-# # Rejillas definidas 
-# rejilla_mm   <- data.frame(k     = 2:12)
-# rejilla_dmm  <- data.frame(k     = 2:12)
-# rejilla_ses  <- data.frame(alpha = seq(0.02, 0.98, by = 0.02))
-# 
-# # Rejilla Holt: producto de alpha x beta
-# alpha_seq    <- seq(0.05, 0.95, by = 0.05)
-# 
-# # crea un data.frame de todas las combinaciones de entre alpha y beta
-# rejilla_holt <- expand.grid(alpha = alpha_seq, beta = alpha_seq) 
-
-
-
-# 
-# Grafico de mse vs alpha
-graficar_mse_1d <- function(resultado, nombre_param, titulo) {
+ajustar_hw_mult <- function(y, s, alpha, beta, gamma) {
   
+  # Validaciones
+  stopifnot(!anyNA(y), is.numeric(y), all(y > 0))
+  stopifnot(is.numeric(s), length(s) == 1, s >= 2, length(y) >= 2 * s)
+  stopifnot(is.numeric(alpha), length(alpha) == 1, alpha > 0, alpha < 1)
+  stopifnot(is.numeric(beta),  length(beta)  == 1, beta  > 0, beta  < 1)
+  stopifnot(is.numeric(gamma), length(gamma) == 1, gamma > 0, gamma < 1)
+  
+  T_obs <- length(y)
+  
+  L      <- rep(NA_real_, T_obs)
+  Tr     <- rep(NA_real_, T_obs)
+  S      <- rep(NA_real_, T_obs)
+  fitted <- rep(NA_real_, T_obs)
+  
+  # Inicializacion clasica con los dos primeros ciclos
+  L[s]  <- mean(y[1:s])
+  Tr[s] <- (mean(y[(s + 1):(2 * s)]) - mean(y[1:s])) / s
+  S[1:s] <- y[1:s] / L[s]
+  S[1:s] <- S[1:s] / mean(S[1:s])     # garantiza promedio igual a 1
+  
+  # Recursion a partir de t = s+1
+  for (t in (s + 1):T_obs) {
+    Yhat_t    <- (L[t - 1] + Tr[t - 1]) * S[t - s]
+    fitted[t] <- Yhat_t
+    L[t]      <- alpha * (y[t] / S[t - s]) + (1 - alpha) * (L[t - 1] + Tr[t - 1])
+    Tr[t]     <- beta  * (L[t] - L[t - 1]) + (1 - beta) * Tr[t - 1]
+    S[t]      <- gamma * (y[t] / L[t]) + (1 - gamma) * S[t - s]
+  }
+  
+  residuales <- y - fitted
+  
+  # Pronostico extramuestral: se repite el patron estacional cada s pasos
+  forecast_fn <- function(h) {
+    m   <- ((h - 1) %% s) + 1
+    idx <- T_obs - s + m
+    (L[T_obs] + Tr[T_obs] * h) * S[idx]
+  }
+  
+  # yhat: fitted[t] ya es Yhat_t (NA en calentamiento, t = 1..s)
+  yhat <- fitted
+  
+  pronosticar <- function(h) {
+    stopifnot(is.numeric(h), length(h) == 1, h >= 1)
+    forecast_fn(1:h)
+  }
+  
+  list(
+    metodo         = paste("Holt-Winters multiplicativo s =", s,
+                           "alpha =", alpha, "beta =", beta, "gamma =", gamma),
+    yhat           = yhat,
+    pronosticar    = pronosticar,
+    parametros     = list(alpha = alpha, beta = beta, gamma = gamma,
+                          L_final = L[T_obs], T_final = Tr[T_obs],
+                          S_final = S[(T_obs - s + 1):T_obs]),
+    s              = s,
+    alpha          = alpha,
+    beta           = beta,
+    gamma          = gamma,
+    L              = L,
+    Tr             = Tr,
+    S              = S,
+    Ajustados      = fitted,
+    residuales     = residuales,
+    Extra_muestral = forecast_fn,
+    T_observado    = T_obs
+  )
+}
+
+
+
+# ---------------------------------------------------------------- Graficos de MSE
+graficar_mse_1d <- function(resultado, nombre_param, titulo) {
   ggplot2::ggplot(resultado$rejilla,
                   ggplot2::aes(x = .data[[nombre_param]], y = mse)) +
     ggplot2::geom_line(color = "steelblue", linewidth = 1) +
     ggplot2::geom_point(data = resultado$optimo,
                         ggplot2::aes(x = .data[[nombre_param]], y = mse),
                         color = "red", size = 3) +
-    ggplot2::labs(title = titulo,
-                  x     = nombre_param,
-                  y     = "MSE") +
+    ggplot2::labs(title = titulo, x = nombre_param, y = "MSE") +
     ggplot2::theme_minimal()
 }
 
-
-# grafico para holt
-
 graficar_mse_holt <- function(resultado, titulo) {
-  
   ggplot2::ggplot(resultado$rejilla,
                   ggplot2::aes(x = alpha, y = beta, fill = mse)) +
     ggplot2::geom_tile() +
     ggplot2::scale_fill_viridis_c(option = "C") +
-    ggplot2::geom_point(data    = resultado$optimo,
+    ggplot2::geom_point(data = resultado$optimo,
                         ggplot2::aes(x = alpha, y = beta),
-                        color   = "red",
-                        size    = 4,
-                        inherit.aes = FALSE) +
-    ggplot2::labs(title = titulo,
-                  x     = "alpha",
-                  y     = "beta",
-                  fill  = "MSE") +
+                        color = "red", size = 4, inherit.aes = FALSE) +
+    ggplot2::labs(title = titulo, x = "alpha", y = "beta", fill = "MSE") +
     ggplot2::theme_minimal()
 }
-
-# # Uso de graficos
-# graficar_mse_1d(res_mm,  "k",     "MSE - Media Movil")
-# graficar_mse_1d(res_dmm, "k",     "MSE - Doble Media Movil")
-# graficar_mse_1d(res_ses, "alpha", "MSE - SES")
-# graficar_mse_holt(res_holt,         "MSE - Holt (alpha, beta)")
-

@@ -50,31 +50,7 @@ polinomio_rezago <- function(coef) {
 # }
 
 
-# verificaciones
-# 
-# D <- 1
-# s <- 4
-# set.seed(2024)
-# y <- rnorm(100, 2, 3)
-# # caso 1
-# mia_est   <- diferenciar(y, d = 0, D = D, s = s)
-# base_est  <- diff(y, lag = s, differences = D)
-# 
-# cat("Diferencia estacional (D =", D, ", s =", s, ") coincide:",
-#     all.equal(mia_est, base_est), "\n")
-# 
-# # caso 2
-# d <- 1; D <- 1; s <- 4
-# mia_comb  <- diferenciar(y, d = d, D = D, s = s)
-# base_comb <- diff(diff(y, lag = s, differences = D), differences = d)
-# 
-# cat("Combinación (d =", d, ", D =", D, ", s =", s, ") coincide:",
-#     all.equal(mia_comb, base_comb), "\n")
-# 
-# polinomio
-# c(B) = 1 - 0.5B + 0.25B^2
-# coef <- c(-0.5, 0.25)
-# print(polinomio_rezago(coef))
+
 
 #-----------Media Movil centrada------------------------#
 
