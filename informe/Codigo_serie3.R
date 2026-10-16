@@ -3,20 +3,6 @@
 
 serie_3 <- leer_serie("datos/STJNKV-serie-3.csv", "CORPALMAS acueducto", "m³/s")
 
-#----ficha----
-
-ficha_st3 <- crear_ficha(serie_3, "Caudal medio mensual de un río andino", "m³/s")
-
-tabla_ficha3 <- kable(ficha_st3, booktabs = TRUE, align = c("l", "l"),
-      caption = "Ficha técnica - Serie 3") |> 
-  kable_styling(latex_options = c("hold_position"),
-                full_width = FALSE)
-
-save_kable(tabla_ficha3, file = "figs/ficha_serie3.png")
-
-remove(tabla_ficha3, ficha_st3)
-
-
 
 #---- tabla----
 
@@ -181,18 +167,6 @@ ggsave(
 op_Rs12_serie3 <- diferenciar(serie_3$y, 0, 1, 12)
 
 
-
-#----indentidad gamma1 / gamma0 = r1----
-
-r1_s3 <- gamma1_s3_12 / gamma0_s3_12
-r1_s3
-
-var_s3 <- 2*gamma0_s3_12 - 2 * gamma1_s3_12
-
-var_s3
-
-var(serie_3$y)
-
 ##----verificacion de tendencia----
 
 y3 <- serie_3$y
@@ -255,6 +229,18 @@ g_s3_12 <- c(gamma1_s3_12, gamma2_s3_12)
 coef_s3_12 <- solve(Gamma_s3_12, g_s3_12)
 
 polinomio_rezago(coef_s3_12)
+
+#----indentidad gamma1 / gamma0 = r1----
+
+r1_s3 <- gamma1_s3_12 / gamma0_s3_12
+r1_s3
+
+var_s3 <- 2*gamma0_s3_12 - 2 * gamma1_s3_12
+
+var_s3
+
+var(serie_3$y)
+
 
 serie3_s12 <- serie_3 |> 
   rename(valores = y) |> 

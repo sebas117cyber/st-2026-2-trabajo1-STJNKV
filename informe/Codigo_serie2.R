@@ -4,21 +4,6 @@
 serie_2 <- leer_serie("datos/STJNKV-serie-2.csv", "estación de monitoreo del centro de Villa Clara", 
                       "µg/m³")
 
-#----ficha----
-
-ficha_st2 <- crear_ficha(serie_2, "concentracion de PM2.5  2025-02-03 a 2025-09-10")
-
-tabla_ficha2 <- kable(ficha_st2, booktabs = TRUE, align = c("l", "l"),
-      caption = "Ficha técnica - Serie 2") |> 
-  kable_styling(latex_options = c("hold_position"),
-                full_width = FALSE)
-
-save_kable(tabla_ficha2, file = "figs/ficha_serie2.png")
-
-remove(ficha_st2, tabla_ficha2)
-
-
-
 
 # --- tabla 2 ----
 
@@ -118,7 +103,7 @@ f2 <- f_estacional(y2, pos2, s2)
 
 
 
-r2 <- acf_muestral(y2, 24)
+r2 <- acf_muestral_m(y2, 24)
 r2[c("7", "14", "21")]
 1.96 / sqrt(length(y2))     
 round(f2$medias, 2)

@@ -25,7 +25,6 @@ library(kableExtra)
 
 \newpage
 
-
 ```{r, include=FALSE}
 
 source("../R/00-lectura.R")
@@ -37,8 +36,7 @@ source("../R/05-evaluacion.R")
 
 
 ```
-
-
+# 1
 # Punto 2
 
 ```{r, include=FALSE}
@@ -53,7 +51,6 @@ serie_3 <- leer_serie("../datos/STJNKV-serie-3.csv", "CORPALMAS acueducto", "m³
 
 
 ```
-
 
 ```{r, include=FALSE}
 
@@ -116,8 +113,6 @@ tabla_transformaciones <- function(y, transformaciones) {
 
 ```
 
-
-
 ## A
 
 ### Item A
@@ -138,12 +133,9 @@ tabla_ficha1
 
 ```
 
-
-
 #### ficha serie 2
 
 <!-- ![Ficha técnica - Serie 2](../figs/ficha_serie2.png){width="100%"} -->
-
 
 ```{r, echo=FALSE}
 
@@ -158,8 +150,6 @@ tabla_ficha2 <- kable(ficha_st2, booktabs = TRUE, align = c("l", "l"),
 tabla_ficha2
 
 ```
-
-
 
 #### ficha serie 3
 
@@ -177,8 +167,6 @@ tabla_ficha3 <- kable(ficha_st3, booktabs = TRUE, align = c("l", "l"),
 tabla_ficha3
 
 ```
-
-
 
 ## B
 
@@ -212,7 +200,7 @@ fuente_1     <- attr(serie_1, "fuente")
 
 # Regla de partición (ajustar según lo pedido en el enunciado)
 n0_1 <- floor(0.8 * T_1)          # 80% entrenamiento
-H_1  <- frecuencia_1              # horizonte en la frecuencia de la serie
+H_1  <- 18              # horizonte en la frecuencia de la serie
 
 origenes_h1_1 <- T_1 - n0_1
 origenes_H_1  <- T_1 - n0_1 - H_1 + 1
@@ -320,7 +308,6 @@ tabla_Rs3 <- kable(tabla_serie3, booktabs = TRUE, align = "c",
 
 ```
 
-
 ```{r, echo=FALSE}
 # tabla entera
 
@@ -362,8 +349,6 @@ remove(T_3, frecuencia_3, unidad_3, fuente_3, n0_3, H_3, origenes_h1_3, origenes
        fecha_inicio_3, fecha_corte_3, fecha_fin_3, tabla_serie3, tabla_Rs3)
 
 ```
-
-
 
 <!-- ![Tabla de reglas - Serie 1](../figs/tablaR_serie1.png){width="100%"} -->
 
@@ -732,7 +717,6 @@ cat("Diferencia estacional (D =", D, ", s =", s, ") coincide:",
 
 ```
 
-
 ```{r}
 # caso 2
 d <- 1; D <- 1; s <- 4
@@ -748,7 +732,6 @@ coefi <- c(-0.5, 0.25)
 print(polinomio_rezago(coefi))
 ```
 
-
 ```{r, include=FALSE}
 
 remove(d, D, s, y, mia_est, mia_comb, base_comb, base_est, coefi)
@@ -756,13 +739,13 @@ remove(d, D, s, y, mia_est, mia_comb, base_comb, base_est, coefi)
 
 ```
 
-
-
 ## item b
+
 ### raizes serie 1
+
 **serie 1**
 
-La serie no es estacional por ende se propone estabilizar la varianza con una transformacion y hacer una diferencia para eliminar la tendencia  $(\nabla \log(yt))$
+La serie no es estacional por ende se propone estabilizar la varianza con una transformacion y hacer una diferencia para eliminar la tendencia $(\nabla \log(yt))$
 
 $z_t = \log(yt)$ estabilizara la varianza
 
@@ -770,22 +753,17 @@ $w_t = (1-B) z_t$ elimina la tendencia
 
 $c(B)= 1-B$ seria el polinomio
 
-
 ![Raizes en el plano - serie 1](../figs/raiz_s1P.png)
 
-
-
 ### raizes serie 2
+
 **serie 2**
 
 La serie no es estacional y se dice que es tipo 1 estacionaria en media, por lo que al diferenciar por $\nabla$ no se encontrara mejor pronostico que con los datos originales.
 
-$c(B)= (1-B)^0 y_t = y_t$ no hay polinomio en este caso. 
-
-
+$c(B)= (1-B)^0 y_t = y_t$ no hay polinomio en este caso.
 
 <!-- ![Raizes en el plano - serie 2](../figs/raiz_s2P.png) -->
-
 
 ### raizes serie 3
 
@@ -836,8 +814,7 @@ tablaVar_s1 |>
 
 ```
 
-La tranformacion elegida es la de una diferencia  $\nabla y_t$ debido a que al tranformar los datos con $\log(y_t)$ se estabiliza la varianza pero al aplicarle la diferencia se sobre diferencia por el resultado de $r_1 < -0.5$ por ende no captura estacionalidad conclusion que soporta mas la no estacionalidad del punto 2. Caso contrario con una sola diferencia ya que el $r_1= -0.2969 > -0.5$ que no sobre diferencia y disminuye drasticamente la varianza. si se sigue diferenciando, r1 seria mas pequeño pero esta dejaria ruido blanco al no haber estacionalidad
-
+La tranformacion elegida es la de una diferencia $\nabla y_t$ debido a que al tranformar los datos con $\log(y_t)$ se estabiliza la varianza pero al aplicarle la diferencia se sobre diferencia por el resultado de $r_1 < -0.5$ por ende no captura estacionalidad conclusion que soporta mas la no estacionalidad del punto 2. Caso contrario con una sola diferencia ya que el $r_1= -0.2969 > -0.5$ que no sobre diferencia y disminuye drasticamente la varianza. si se sigue diferenciando, r1 seria mas pequeño pero esta dejaria ruido blanco al no haber estacionalidad
 
 ### serie 2
 
@@ -871,6 +848,7 @@ tablaVar_s2 |>
 Se escoge la serie original sin diferenciar debido a que se concluyo la no estacionalidad anteriormente, ademas al diferenciar una vez la varianza no cambia drasticamente comparada con la original
 
 ### serie 3
+
 ```{r, echo=FALSE}
 
 transformaciones_s3 <- list(
@@ -921,8 +899,6 @@ Se escoge la transformacion $\nabla_{12}$ debido a que es la que mas reduce la v
 ![Anexo a mano punto 4.d](../figs/5.jpeg)
 
 ![Anexo a mano punto 4.d](../figs/6.jpeg)
-
-
 
 # Punto 5
 
@@ -977,7 +953,6 @@ correlograma_dl <- function(datos, m = NULL) {
   list(acf = r, pacf = p, panel = g_acf / g_pacf)
 }
 ```
-
 
 ```{r, echo=FALSE}
 crd1 <-correlograma_dl(serie1_op)$panel
@@ -1145,17 +1120,13 @@ $$\begin{aligned}
  H_1&:\exists k\in\{1,\ldots,m\}\text{ tal que }\rho_k\neq 0. 
 \end{aligned}$$
 
-
 $$\begin{aligned}
  H_0&:\rho_1=\rho_2=\cdots=\rho_m=0, \\
  H_1&:\exists k\in\{1,\ldots,m\}\text{ tal que }\rho_k\neq 0. 
 \end{aligned}$$
 
-
 El estadístico de prueba es
-$$
-Q=n(n+2) \sum_{k=1}^{m} \frac{\hat{\rho}_{2k}}{n-k}
-$$
+$$Q=n(n+2) \sum_{k=1}^{m} \frac{\hat{\rho}_{2k}}{n-k}$$
 
 que, bajo la hipótesis nula y los supuestos correspondientes, se compara aproximadamente con una distribución $\chi^2_m$. Como no se estiman parámetros de un modelo sobre estas autocorrelaciones, no se realiza ningún ajuste adicional en los grados de libertad.
 
@@ -1173,10 +1144,7 @@ tab_lb <- do.call(rbind, lapply(c("1", "2", "3"), function(nm) {
 tab_lb
 ```
 
-
-
 ## C
-
 
 ```{r, echo=FALSE}
 
@@ -1248,7 +1216,6 @@ intervalos_media <- function(y){
 
 ## bloques serie 1
 
-
 ```{r, echo=FALSE}
 c_s1 <- list(bloques = analisis_bloques(serie1_op$y),
              intervalos = intervalos_media(serie1_op$y))
@@ -1277,7 +1244,6 @@ c_s1$bloques |>
 
 ```
 
-
 ```{r, echo=FALSE}
 tabla_intervalos_s1 <- tibble(
   Metodo = c("Ingenuo (independencia)", "Largo plazo (Bartlett, L = %d)" |> sprintf(c_s1$intervalos$L)),
@@ -1303,9 +1269,6 @@ tabla_intervalos_s1 |>
 
 ```
 
-
-
-
 ## bloques serie 2
 
 ```{r, echo=FALSE}
@@ -1316,7 +1279,6 @@ c_s2 <- list(bloques = analisis_bloques(serie2_op$y),
 graficar_bloques(c_s2$bloques, "Serie 2")
 
 ```
-
 
 ```{r, echo=FALSE}
 c_s2$bloques |> 
@@ -1337,7 +1299,6 @@ c_s2$bloques |>
 
 
 ```
-
 
 ```{r, echo=FALSE}
 tabla_intervalos_s2 <- tibble(
@@ -1364,9 +1325,6 @@ tabla_intervalos_s2 |>
 
 ```
 
-
-
-
 ## bloques serie 3
 
 ```{r, echo=FALSE}
@@ -1377,7 +1335,6 @@ c_s3 <- list(bloques = analisis_bloques(serie3_op$y),
 graficar_bloques(c_s3$bloques, "Serie 3")
 
 ```
-
 
 ```{r, echo=FALSE}
 c_s3$bloques |> 
@@ -1398,7 +1355,6 @@ c_s3$bloques |>
 
 
 ```
-
 
 ```{r, echo=FALSE}
 tabla_intervalos_s3 <- tibble(
@@ -1480,14 +1436,13 @@ for (m in list(function(v) ajustar_mm(v, 3), function(v) ajustar_ses(v, 0.3),
 cat("Verificacion de metodos: OK\n")
 ```
 
-
 ## serie 1 datos
 
 ```{r, echo=FALSE}
 y1   <- serie_1$y
 T1   <- length(y1)
 n0_1 <- floor(0.8 * T1)      # 136
-H1   <- 12                   # la ampliación tarda 18 meses
+H1   <- 18                   # la ampliación tarda 18 meses
 
 #stopifnot(length(n0_1:(T1 - 1)) == 34, length(n0_1:(T1 - H1)) == 17)
 
@@ -1496,7 +1451,7 @@ print(c(T = T1, n0 = n0_1, H = H1,
 print(serie_1$fecha[c(1, n0_1, T1)])
 ```
 
-###  optimizacion de parametros y metodos posibles
+### optimizacion de parametros y metodos posibles
 
 ```{r, echo=FALSE}
 
@@ -1511,7 +1466,6 @@ print(opt_ses$optimo);  print(opt_holt$optimo)
 print(c(MM = opt_mm$inicio_comun, DMM = opt_dmm$inicio_comun,
         SES = opt_ses$inicio_comun, Holt = opt_holt$inicio_comun))
 ```
-
 
 ```{r, echo=FALSE}
 # ITEM 6(a) - Curvas y mapa de MSE
@@ -1557,7 +1511,9 @@ for (tp in tipos) {
               v$dw$d, v$dw$r1, v$dw$aprox_2_1_menos_r1))
 }
 ```
+
 ### aplicacion de metodos serie 1
+
 ```{r, echo=FALSE}
 # ITEM 6(c) - Métodos aplicados a la serie 1 (referente: ingenuo simple, la serie no tiene estacionalidad)
 ajust1 <- list(
@@ -1581,7 +1537,7 @@ tab_H  <- tabla_origen_movil(y1, ajust1, n0_1, H1, "Ingenuo (referente)")
 #stopifnot(all(tab_h1$n_origenes == 34), all(tab_H$n_origenes == 12))
 
 cat("h = 1 (34 origenes)\n");  print(tab_h1, digits = 4)
-cat("\nh =", H1, "(23 origenes)\n"); print(tab_H, digits = 4)
+cat("\nh =", H1, "(17 origenes)\n"); print(tab_H, digits = 4)
 
 # Error medio a h = H (signo del sesgo)
 print(sapply(names(ajust1), function(nm) mean(origen_movil(y1, ajust1[[nm]], n0_1, H1)$error)))
@@ -1658,7 +1614,408 @@ ggplot() +
 
 ## serie 2
 
+```{r, echo=FALSE}
+y_s2 <- serie_2$y
+
+T2   <- length(y_s2)
+n0_2 <- floor(0.8 * T2)
+H2   <- 7
+
+print(c(T = T2, n0 = n0_2, H = H2,
+        origenes_h2 = length(n0_2:(T2 - 1)), origenes_H = length(n0_2:(T2 - H2))))
+print(serie_2$fecha[c(1, n0_2, T2)])
+
+```
+
+### optimizacion de parametros
+
+```{r, echo=FALSE}
+opts2_mm   <- optimizar(y_s2, "mm",   data.frame(k = 2:12), n0 = n0_2)
+opts2_dmm  <- optimizar(y_s2, "dmm",  data.frame(k = 3:12), n0 = n0_2)
+opts2_ses  <- optimizar(y_s2, "ses",  data.frame(alpha = seq(0.02, 0.98, by = 0.02)), n0 = n0_2)
+opts2_holt <- optimizar(y_s2, "holt", expand.grid(alpha = seq(0.05, 0.95, by = 0.05),
+                                                  beta  = seq(0.05, 0.95, by = 0.05)), n0 = n0_2)
+
+print(opts2_mm$optimo);   print(opts2_dmm$optimo)
+print(opts2_ses$optimo);  print(opts2_holt$optimo)
+print(c(MM = opts2_mm$inicio_comun, DMM = opts2_dmm$inicio_comun,
+        SES = opts2_ses$inicio_comun, Holt = opts2_holt$inicio_comun))
 
 
+```
+
+
+
+```{r, echo=FALSE}
+
+(graficar_mse_1d(opts2_mm,  "k",     "MSE de un paso: media movil") |
+   graficar_mse_1d(opts2_dmm, "k",     "MSE de un paso: doble media movil")) /
+  (graficar_mse_1d(opts2_ses, "alpha", "MSE de un paso: SES") |
+     graficar_mse_holt(opts2_holt,       "MSE de un paso: Holt"))
+
+```
+
+
+### correlogramas 
+
+```{r, echo=FALSE}
+
+tipos_s2 <- c("lineal", "cuadratica", "exponencial")  # metodos de contraste (no aplican por diagnostico)
+fits_s2  <- setNames(lapply(tipos_s2, function(tp) ajustar_tendencia(y_s2, tp)), tipos_s2)
+
+resid_reg_s2 <- list(
+  lineal      = fits_s2$lineal$residuales,
+  cuadratica  = fits_s2$cuadratica$residuales,
+  exponencial = log(y_s2) - log(fits_s2$exponencial$ajustados))   # exponencial en escala log
+
+for (tp in tipos_s2) {
+  cat("\n--- Tendencia", tp, "(exponencial: coeficientes en escala log) ---\n")
+  print(fits_s2[[tp]]$tabla, digits = 4)
+  cat("t critico (5%, gl = n - k):",
+      round(qt(0.975, T2 - nrow(fits_s2[[tp]]$tabla)), 3), "\n")   
+  cat("R2:", round(fits_s2[[tp]]$r2, 4), "\n")
+}
+
+```
+
+
+
+```{r, echo=FALSE}
+
+for (tp in tipos_s2) {
+  e <- resid_reg_s2[[tp]]
+  v <- validar_errores(e, m = 24)
+  cat("\n--- Residuos de la tendencia", tp, "---\n")
+  print(correlograma(data.frame(y = e))$panel)
+  cat(sprintf("Ljung-Box (m = 24, 24 gl): Q = %.2f, critico = %.2f, p = %.3g\n",
+              v$lb$obs, qchisq(0.95, 24), v$lb$p))
+  cat(sprintf("Jarque-Bera (2 gl): JB = %.2f, critico = %.2f, p = %.3g\n",
+              v$jb$obs, qchisq(0.95, 2), v$jb$p))
+  cat(sprintf("Durbin-Watson: d = %.3f, r1 = %.3f, 2(1-r1) = %.3f\n",
+              v$dw$d, v$dw$r1, v$dw$aprox_2_1_menos_r1))
+}
+
+
+```
+
+
+
+```{r, echo=FALSE}
+
+res_media   <- ajustar_media(y_s2)
+res_ingenuo <- ajustar_ingenuo(y_s2)
+
+cat("Nivel final Media simple:", res_media$Extra_muestral(1), "\n")
+cat("Nivel final Ingenuo:     ", res_ingenuo$Extra_muestral(1), "\n")
+
+```
+
+### aplicacion de metodos
+
+```{r, echo=FALSE}
+
+ajust2 <- list(
+  "Ingenuo (referente)"           = ajustar_ingenuo,
+  "Media simple" = ajustar_media,
+  "Media movil"       = function(v) ajustar_mm(v,  opts2_mm$optimo$k),
+  "SES "               = function(v) ajustar_ses(v, opts2_ses$optimo$alpha),
+  "Doble media movil (contraste)" = function(v) ajustar_dmm(v, opts2_dmm$optimo$k),
+  "Holt (contraste)"              = function(v) ajustar_holt(v, opts2_holt$optimo$alpha,
+                                                             opts2_holt$optimo$beta),
+  "Tendencia lineal (contraste)"      = function(v) ajustar_tendencia(v, "lineal",      calcular_yhat = FALSE),
+  "Tendencia cuadratica (contraste)"  = function(v) ajustar_tendencia(v, "cuadratica",  calcular_yhat = FALSE),
+  "Tendencia exponencial (contraste)" = function(v) ajustar_tendencia(v, "exponencial", calcular_yhat = FALSE)
+)
+
+```
+
+
+
+```{r, echo=FALSE}
+
+tab2_h1 <- tabla_origen_movil(y_s2, ajust2, n0_2, 1,   "Ingenuo (referente)")
+tab2_H  <- tabla_origen_movil(y_s2, ajust2, n0_2, H2,  "Ingenuo (referente)")
+
+stopifnot(all(tab2_h1$n_origenes == 44), all(tab2_H$n_origenes == 38))
+
+cat("h = 1 (44 origenes)\n");  print(tab2_h1, digits = 4)
+cat("\nh =", H2, "(38 origenes)\n"); print(tab2_H, digits = 4)
+
+# Error medio a h = H (signo del sesgo)
+print(sapply(names(ajust2), function(nm) mean(origen_movil(y_s2, ajust2[[nm]], n0_2, H2)$error)))
+
+
+```
+
+
+
+```{r, echo=FALSE}
+
+ganador2_h1 <- tab2_h1$metodo[1]
+print(ganador2_h1)
+
+om2_1 <- origen_movil(y_s2, ajust2[[ganador2_h1]], n0_2, 1)
+e2_1  <- om2_1$error
+
+ggplot(data.frame(fecha = serie_2$fecha[om2_1$objetivo], error = e2_1), aes(fecha, error)) +
+  geom_hline(yintercept = 0) + geom_line() + geom_point() +
+  labs(title = paste("Errores de origen movil a un paso:", ganador2_h1),
+       x = "Fecha", y = paste("Error (", attr(serie_2, "unidad"), ")"),
+       caption = paste0("n = ", length(e2_1), " errores, h = 1")) +
+  theme_minimal()
+
+
+```
+
+
+
+
+```{r, echo=FALSE}
+
+correlograma(data.frame(y = e2_1))$panel
+
+```
+
+### validacion
+
+```{r, echo=FALSE}
+
+val2_1 <- validar_errores(e2_1)
+n_e2   <- length(e2_1); m_e2 <- min(floor(n_e2 / 4), 24)
+
+cat(sprintf("t media cero (%d gl): t = %.3f, critico = %.3f, p = %.3g\n",
+            n_e2 - 1, val2_1$t$obs, qt(0.975, n_e2 - 1), val2_1$t$p))
+cat(sprintf("Ljung-Box (m = %d, %d gl): Q = %.3f, critico = %.3f, p = %.3g\n",
+            m_e2, m_e2, val2_1$lb$obs, qchisq(0.95, m_e2), val2_1$lb$p))
+cat(sprintf("Jarque-Bera (2 gl): JB = %.3f, critico = %.3f, p = %.3g\n",
+            val2_1$jb$obs, qchisq(0.95, 2), val2_1$jb$p))
+cat(sprintf("Durbin-Watson: d = %.3f, r1 = %.3f, 2(1-r1) = %.3f\n",
+            val2_1$dw$d, val2_1$dw$r1, val2_1$dw$aprox_2_1_menos_r1))
+
+```
+
+### e
+
+```{r, echo=FALSE}
+
+
+sd2_h <- vapply(1:H2, function(h) sd(origen_movil(y_s2, ajust2[[ganador2_h1]], n0_2, h)$error),
+                numeric(1))
+print(round(sd2_h, 3))
+
+```
+
+
+
+```{r, echo=FALSE}
+
+
+pron2 <- ajust2[[ganador2_h1]](y_s2)$pronosticar(H2)
+fut2  <- seq(max(serie_2$fecha), by = "day", length.out = H2 + 1)[-1]
+
+df2_fc  <- data.frame(fecha = fut2, pron = pron2,
+                      inf = pron2 - 1.96 * sd2_h, sup = pron2 + 1.96 * sd2_h)
+df2_obs <- tail(data.frame(fecha = serie_2$fecha, y = y_s2), 30)   # ultimo tramo (ajustable)
+
+print(df2_fc)
+
+
+```
+
+
+
+```{r, echo=FALSE}
+
+
+p_final <- ggplot() +
+  geom_line(data = df2_obs, aes(fecha, y)) +
+  geom_ribbon(data = df2_fc, aes(fecha, ymin = inf, ymax = sup), alpha = 0.25) +
+  geom_line(data = df2_fc, aes(fecha, pron), colour = "red") +
+  labs(title = paste("Serie 2: pronostico a", H2, "dias con", ganador2_h1),
+       x = "Fecha", y = attr(serie_2, "unidad"),
+       caption = "Banda heuristica: ±1.96 veces la desviacion de los errores de origen movil a cada horizonte; no es un intervalo de confianza.") +
+  theme_minimal()
+
+
+print(p_final)
+
+
+```
+
+
+## serie 3
+
+```{r, echo=FALSE}
+
+y_s3 <- serie_3$y
+
+T3   <- length(y_s3)
+n0_3 <- floor(0.8 * T3)
+H3   <- 12
+
+print(c(T = T3, n0 = n0_3, H = H3,
+        origenes_h3 = length(n0_3:(T3 - 1)), origenes_H = length(n0_3:(T3 - H3))))
+print(serie_3$fecha[c(1, n0_3, T3)])
+
+
+
+```
+
+
+### optimizacion de parametros para los metodos
+
+```{r, echo=FALSE}
+
+
+opts3_hw <- optimizar(y_s3, "hw", expand.grid(alpha = seq(0.05, 0.95, by = 0.05),
+                                              beta  = seq(0.05, 0.95, by = 0.05),
+                                              gamma = seq(0.05, 0.95, by = 0.05)),
+                      n0 = n0_3, s = 12)
+
+opts3_hmulti <- optimizar(y_s3, "hw_mult", expand.grid(alpha = seq(0.05, 0.95, by = 0.05),
+                                                       beta  = seq(0.05, 0.95, by = 0.05),
+                                                       gamma = seq(0.05, 0.95, by = 0.05)),
+                          n0 = n0_3, s = 12)
+
+print(opts3_hw$optimo);     print(opts3_hmulti$optimo)
+print(c(HW_adit = opts3_hw$inicio_comun, HW_multi = opts3_hmulti$inicio_comun))
+
+```
+
+
+```{r, echo=FALSE}
+
+res_ingenuo_s3 <- ajustar_ingenuo(y_s3)
+res_ing_est_s3 <- ajustar_ingenuo_estacional(y_s3, 12)
+
+cat("Nivel final Ingenuo simple:    ", res_ingenuo_s3$Extra_muestral(1), "\n")
+cat("Nivel final Ingenuo estacional:", res_ing_est_s3$Extra_muestral(1), "\n")
+
+
+
+```
+
+### aplicacion de metodos
+
+```{r, echo=FALSE}
+
+ajust3 <- list(
+  "Ingenuo estacional"     = function(v) ajustar_ingenuo_estacional(v, 12),
+  "tendencia ficticias"    = function(v) ajustar_tendencia_estacional(v, 12),
+  "Holt aditivo"           = function(v) ajustar_hw(v, 12, opts3_hw$optimo$alpha,
+                                                    opts3_hw$optimo$beta,
+                                                    opts3_hw$optimo$gamma),
+  "ingenuo (referente)"    = ajustar_ingenuo,
+  "Holt-multi(contraste)"  = function(v) ajustar_hw_mult(v, 12, opts3_hmulti$optimo$alpha,
+                                                         opts3_hmulti$optimo$beta,
+                                                         opts3_hmulti$optimo$gamma)
+)
+
+
+
+
+```
+
+```{r, echo=FALSE}
+
+n_oseg_h1 <- length(n0_3:(T3 - 1))
+n_oseg_H  <- length(n0_3:(T3 - H3))
+
+tab3_h1 <- tabla_origen_movil(y_s3, ajust3, n0_3, 1,  "Ingenuo estacional")
+tab3_H  <- tabla_origen_movil(y_s3, ajust3, n0_3, H3, "Ingenuo estacional")
+
+stopifnot(all(tab3_h1$n_origenes == n_oseg_h1), all(tab3_H$n_origenes == n_oseg_H))
+
+cat("h = 1 (", n_oseg_h1, "origenes)\n");  print(tab3_h1, digits = 4)
+cat("\nh =", H3, "(", n_oseg_H, "origenes)\n"); print(tab3_H, digits = 4)
+
+# Error medio a h = H (signo del sesgo)
+print(sapply(names(ajust3), function(nm) mean(origen_movil(y_s3, ajust3[[nm]], n0_3, H3)$error)))
+
+
+
+```
+
+```{r, echo=FALSE}
+
+ganador3_h1 <- tab3_h1$metodo[1]
+print(ganador3_h1)
+
+om3_1 <- origen_movil(y_s3, ajust3[[ganador3_h1]], n0_3, 1)
+e3_1  <- om3_1$error
+
+ggplot(data.frame(fecha = serie_3$fecha[om3_1$objetivo], error = e3_1), aes(fecha, error)) +
+  geom_hline(yintercept = 0) + geom_line() + geom_point() +
+  labs(title = paste("Errores de origen movil a un paso:", ganador3_h1),
+       x = "Fecha", y = paste("Error (", attr(serie_3, "unidad"), ")"),
+       caption = paste0("n = ", length(e3_1), " errores, h = 1")) +
+  theme_minimal()
+
+
+```
+
+```{r, echo=FALSE}
+
+correlograma(data.frame(y = e3_1))$panel
+
+```
+
+### Validacion
+
+```{r, echo=FALSE}
+
+val3_1 <- validar_errores(e3_1)
+n_e3   <- length(e3_1); m_e3 <- min(floor(n_e3 / 4), 24)
+
+cat(sprintf("t media cero (%d gl): t = %.3f, critico = %.3f, p = %.3g\n",
+            n_e3 - 1, val3_1$t$obs, qt(0.975, n_e3 - 1), val3_1$t$p))
+cat(sprintf("Ljung-Box (m = %d, %d gl): Q = %.3f, critico = %.3f, p = %.3g\n",
+            m_e3, m_e3, val3_1$lb$obs, qchisq(0.95, m_e3), val3_1$lb$p))
+cat(sprintf("Jarque-Bera (2 gl): JB = %.3f, critico = %.3f, p = %.3g\n",
+            val3_1$jb$obs, qchisq(0.95, 2), val3_1$jb$p))
+cat(sprintf("Durbin-Watson: d = %.3f, r1 = %.3f, 2(1-r1) = %.3f\n",
+            val3_1$dw$d, val3_1$dw$r1, val3_1$dw$aprox_2_1_menos_r1))
+
+
+```
+
+### e
+
+```{r, echo=FALSE}
+
+sd3_h <- vapply(1:H3, function(h) sd(origen_movil(y_s3, ajust3[[ganador3_h1]], n0_3, h)$error),
+                numeric(1))
+print(round(sd3_h, 3))
+
+
+```
+
+
+
+
+```{r, echo=FALSE}
+
+pron3 <- ajust3[[ganador3_h1]](y_s3)$pronosticar(H3)
+fut3  <- seq(max(serie_3$fecha), by = "month", length.out = H3 + 1)[-1]
+
+df3_fc  <- data.frame(fecha = fut3, pron = pron3,
+                      inf = pron3 - 1.96 * sd3_h, sup = pron3 + 1.96 * sd3_h)
+df3_obs <- tail(data.frame(fecha = serie_3$fecha, y = y_s3), 36)   # ultimos 3 anios (ajustable)
+
+print(df3_fc)
+
+p_final3 <- ggplot() +
+  geom_line(data = df3_obs, aes(fecha, y)) +
+  geom_ribbon(data = df3_fc, aes(fecha, ymin = inf, ymax = sup), alpha = 0.25) +
+  geom_line(data = df3_fc, aes(fecha, pron), colour = "red") +
+  labs(title = paste("Serie 3: pronostico a", H3, "meses con", ganador3_h1),
+       x = "Fecha", y = attr(serie_3, "unidad"),
+       caption = "Banda heuristica: ±1.96 veces la desviacion de los errores de origen movil a cada horizonte; no es un intervalo de confianza.") +
+  theme_minimal()
+
+print(p_final3)
+
+
+```
 
 

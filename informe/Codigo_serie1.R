@@ -9,20 +9,6 @@ source("R/04-metodos.R")
 serie_1 <- leer_serie("datos/STJNKV-serie-1.csv", "CORPALMAS acueducto", "miles m³")
 
 
-# ----ficha tecnica-----
-
-
-ficha_st1 <- crear_ficha(serie_1, "consumo mensual de agua potable 2011-2025", "m³")
-
-tabla_ficha1 <- kable(ficha_st1, booktabs = TRUE, align = c("l", "l"),
-      caption = "Ficha técnica - Serie 1") |> 
-  kable_styling(latex_options = c("hold_position"),
-                full_width = FALSE)
-
-save_kable(tabla_ficha1, file = "figs/ficha_serie1.png")
-
-remove(tabla_ficha1, ficha_st1)
-
 
 #----- tabla------
 
