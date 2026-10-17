@@ -18,13 +18,28 @@
 
 ``` r
 # paquetes
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(tibble)
+library(ggplot2)
+library(kableExtra)
+
 ```
 
 # tiempos de ejecucion
 
 ```         
 quarto render informe/informe.qmd
+ tardo 55 segundos en renderizar en R 4.51
+
 ```
+## Propiedad de funciones 
+
+Las funciones de 
+`R/00-lectura.R` `R/01-graficos` `R/03-dependencias.R` `R/04-metodos.R` `R/05-evaluaciones.R`
+son Propiedad del compañero Daniel Garavito mientras que las funciones de`R/02-operadores.R` fueron creadas por sebastian valencia 
+
 
 ## Cómo se usan las funciones
 
@@ -40,5 +55,10 @@ quarto render informe/informe.qmd
 Se usó un asistente de IA como apoyo:
 
 - **Lo que se pidió:**
+Se pidió apoyo en la creación de tablas latex para la renderizacion del qmd, apoyo en la adaptación de código para crear las funciones  `ajustar_hw` y `ajustar_hw_multi`. también se pidió asistencia en código para la organización de resultados de pronósticos.
+
 - **Lo que se recibió:**
+Se recibió código de tablas en látex para qmd, código de R con las funciones creadas y funciones nuevas para la organización de resultados.
+
 - **Lo que se verificó por cuenta propia:**.
+Se verificó los valores de las tablas y se organizaron en orden para el informe.El código de las funciones nuevas se verificaron su funcionamiento y se modificaron deacuerdo a lo necesitado, se usaron especialmente en el punto 6 para organizar los resultados de los pronósticos. 
