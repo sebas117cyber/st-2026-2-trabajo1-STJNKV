@@ -49,6 +49,12 @@ son Propiedad del compañero Daniel Garavito mientras que las funciones de`R/02-
 ```
 
 ## Resumen de resultados
+| Serie | Transformación elegida | Modelo ganador | Parámetros | RMSE (h=1) | RMSE (H) |
+|:-----------|:-----------|:-----------|:-----------|:-----------|:-----------|
+| Serie 1 | operador de rezago orden 1 | Holt | alpha=0.2, beta=0.05 | 5.134 | 6.751 |
+| Serie 2 | ninguna | Ingenuo | No aplica | 3.344 | 3.724 |
+| Serie 3 | Diferencia estacional | Tendencia con ficticias | No aplica | 11.38 | 10.89 |
+
 
 ## Declaración de uso de IA
 
