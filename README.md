@@ -44,8 +44,51 @@ son Propiedad del compañero Daniel Garavito mientras que las funciones de`R/02-
 ## Cómo se usan las funciones
 
 ``` r
+# Media simple
 
-# codigo de ejemplo con una serie
+y <- c(18.43, 19.98, 19.51, 20.63, 19.78, 21.25, 21.18, 22.14)
+
+media_p <- ajusta_media(y)
+
+# Media Movil con ventana de k = 3
+
+mm_p <- ajustar_mm(y, 3)
+mm_p$pronosticar(1)
+
+# Suavizamiento exponencial con alpha= 0.4
+
+ses_p <- ajustar_ses(y, 0.4)
+ses_p$pronosticar(1)
+# Se utilizo el mismo vector (y) como ejemplo
+
+# Holt con alpha = 0.3 y Beta = 0.4
+
+x <- c(133, 155, 165, 171, 194, 231, 274, 312, 313, 333, 343)
+
+holt_p <- ajustar_holt(x, 0.3, 0.4)
+
+
+ajustar_holt(x, 0.3, 0.4)
+
+# Doble media movil con k = 4
+
+dmm_p <- ajustar_dmm(x, 4)
+dmm_p$pronosticar(1)
+
+#Ajustar tendencia (Cuadratica, lineal y exponencial)
+
+ajustar_tendencia(x, tipo = c("lineal"), corregir_sesgo = FALSE)
+ajustar_tendencia(x, tipo = c("cuadratica"), corregir_sesgo = FALSE)
+ajustar_tendencia(x, tipo = c("exponencial"), corregir_sesgo = FALSE)
+# Se utilizo como vector de ejemplo x
+
+# Para las funciones que requieren parametros primero se utiliza la funcion optimizar() para que busque el mejor parametro y despues se usan las funciones metodos de pronosticos (ej: ajustar_holt(y, alpha, beta)
+ajustar_hw(y, s, alpha, beta,
+gamma)
+ajustar_hw_mult(y, s, alpha, beta,
+gamma)) <- funciones que requieren utilizar la función optimizar
+
+# cuando dice que requiere la serie solo se le coloca los valores, (no con fecha) si no solo los valores.
 ```
 
 ## Resumen de resultados
